@@ -212,6 +212,7 @@ void HPL_pdtrsv(HPL_T_grid* GRID, HPL_T_pmat* AMAT) {
         if(GridIsNot1xQ) {
           if(kbprev) {
             CHECK_HIP_ERROR(hipDeviceSynchronize());
+            CHECK_HIP_ERROR(hipDeviceSynchronize());
             (void)HPL_send(
                 Xdprev, kbprev, MModSub1(myrow, nprow), Cmsgid, Ccomm);
           }

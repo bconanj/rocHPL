@@ -90,6 +90,9 @@ if(HPL_TRACING)
                PATHS ${ROCM_PATH}/lib
                NO_DEFAULT_PATH)
 
+
+  message("-- roctracer:  ${ROCTRACER}")
+  message("-- roctx:      ${ROCTX}")
   message("-- roctracer:  ${ROCTRACER}")
   message("-- roctx:      ${ROCTX}")
 

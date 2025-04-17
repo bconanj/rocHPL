@@ -22,6 +22,9 @@
  */
 #include "hpl_misc.hpp"
 #include "mpi.h"
+#include <chrono>
+ 
+ using timePoint_t = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
 #endif
 /*

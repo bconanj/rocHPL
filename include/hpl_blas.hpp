@@ -24,6 +24,8 @@
 #include "hpl_misc.hpp"
 #include <rocblas/rocblas.h>
 #include <iostream>
+#include <rocblas/rocblas.h>
+#include <iostream>
 
 extern rocblas_handle handle;
 extern hipStream_t    computeStream;

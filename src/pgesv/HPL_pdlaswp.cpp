@@ -109,11 +109,16 @@ void HPL_pdlaswp_start(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
    * entry of each column packed in workspace is in fact the row or column
    * offset in U where it should go to.
    */
+  hipStream_t stream;
+  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
   if(myrow == icurrow) {
     // copy needed rows of A into U
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStart[UPD], stream));
     HPL_dlaswp01T(jb, n, A, lda, U, LDU, lindxU);
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStop[UPD], stream));
   } else {
     // copy needed rows from A into U(:, iplen[myrow])
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStart[UPD], stream));
     HPL_dlaswp03T(iplen[myrow + 1] - iplen[myrow],
                   n,
                   A,
@@ -121,6 +126,7 @@ void HPL_pdlaswp_start(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
                   Mptr(U, 0, iplen[myrow], LDU),
                   LDU,
                   lindxU);
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStop[UPD], stream));
   }
 
   // record when packing completes
@@ -258,10 +264,14 @@ void HPL_pdlaswp_exchange(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 #endif
 
     // send rows to other ranks
+    scatter_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_scatterv(U, ipcounts, ipoffsets, ipcounts[myrow], icurrow, comm);
+    scatter_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
     // All gather U
+    gather_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_allgatherv(U, ipcounts[myrow], ipcounts, ipoffsets, comm);
+    gather_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_LASWP);
@@ -283,10 +293,14 @@ void HPL_pdlaswp_exchange(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 #endif
 
     // receive rows from icurrow into W
+    scatter_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_scatterv(W, ipcounts, ipoffsets, ipcounts[myrow], icurrow, comm);
+    scatter_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
     // All gather U
+    gather_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_allgatherv(U, ipcounts[myrow], ipcounts, ipoffsets, comm);
+    gather_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_LASWP);
@@ -382,24 +396,34 @@ void HPL_pdlaswp_end(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
   int* ipA   = PANEL->ipiv + 5 * jb;
   int* iplen = ipA + 1;
 
+  hipStream_t stream;
+  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
   // just local swaps if we're 1xQ
   if(nprow == 1) {
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp00N(jb, n, A, lda, permU);
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStop[UPD], stream));
     return;
   }
 
   if(myrow == icurrow) {
     // swap rows local to A on device
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp02T(*ipA, n, A, lda, lindxAU, lindxA);
+    
   } else {
     // Queue inserting recieved rows in W into A on device
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp04T(iplen[myrow + 1] - iplen[myrow], n, A, lda, W, LDW, lindxU);
+    
+    
   }
 
   /*
    * Permute U in every process row
    */
   HPL_dlaswp10N(n, jb, U, LDU, permU);
+  CHECK_HIP_ERROR(hipEventRecord(rowScatterStop[UPD], stream));
   /*
    * End of HPL_pdlaswp_endT
    */

@@ -75,10 +75,12 @@ void HPL_pdfact(HPL_T_panel* PANEL) {
   /*
    * Factor the panel - Update the panel pointers
    */
+  pdfact_start = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
+
+  HPL_TracingPush("pdfact");
   double max_value[512];
   int    max_index[512];
 
-  HPL_TracingPush("pdfact");
 
   const int maxThreads = omp_get_max_threads();
   const int numThreads = std::min(maxThreads, (PANEL->mp+jb-1)/jb);
@@ -101,6 +103,9 @@ void HPL_pdfact(HPL_T_panel* PANEL) {
   }
 
   HPL_TracingPop();
+
+  pdfact_end = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
+
 
   PANEL->A = Mptr(PANEL->A, 0, jb, PANEL->lda);
   PANEL->nq -= jb;
