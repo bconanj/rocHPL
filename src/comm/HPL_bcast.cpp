@@ -56,7 +56,7 @@ int HPL_bcast(double*   SBUF,
 
   int ierr;
 
-  roctxRangePush("HPL_Bcast");
+  HPL_TracingPush("HPL_Bcast");
 
 #ifdef HPL_USE_COLLECTIVES
 
@@ -64,6 +64,7 @@ int HPL_bcast(double*   SBUF,
 
 #else
 
+  bcast_start = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
   switch(top) {
     case HPL_1RING_M: ierr = HPL_bcast_1rinM(SBUF, SCOUNT, ROOT, COMM); break;
     case HPL_1RING: ierr = HPL_bcast_1ring(SBUF, SCOUNT, ROOT, COMM); break;
@@ -73,10 +74,11 @@ int HPL_bcast(double*   SBUF,
     case HPL_BLONG: ierr = HPL_bcast_blong(SBUF, SCOUNT, ROOT, COMM); break;
     default: ierr = HPL_FAILURE;
   }
+  bcast_end = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
 #endif
 
-  roctxRangePop();
+  HPL_TracingPop();
 
   return ((ierr == MPI_SUCCESS ? HPL_SUCCESS : HPL_FAILURE));
 }

@@ -129,14 +129,14 @@ void HPL_pdtrsv(HPL_T_grid* GRID, HPL_T_pmat* AMAT) {
   if(Anp > 0) {
     if(Alcol != Bcol) {
       if(mycol == Bcol) {
-        hipMemcpy(dXC, dB, Anp * sizeof(double), hipMemcpyDeviceToDevice);
+        CHECK_HIP_ERROR(hipMemcpy(dXC, dB, Anp * sizeof(double), hipMemcpyDeviceToDevice));
         (void)HPL_send(dXC, Anp, Alcol, Rmsgid, Rcomm);
       } else if(mycol == Alcol) {
         (void)HPL_recv(dXC, Anp, Bcol, Rmsgid, Rcomm);
       }
     } else {
       if(mycol == Bcol) {
-        hipMemcpy(dXC, dB, Anp * sizeof(double), hipMemcpyDeviceToDevice);
+        CHECK_HIP_ERROR(hipMemcpy(dXC, dB, Anp * sizeof(double), hipMemcpyDeviceToDevice));
       }
     }
   }
@@ -214,7 +214,7 @@ void HPL_pdtrsv(HPL_T_grid* GRID, HPL_T_pmat* AMAT) {
       if(myrow == rowprev) {
         if(GridIsNot1xQ) {
           if(kbprev) {
-            hipDeviceSynchronize();
+            CHECK_HIP_ERROR(hipDeviceSynchronize());
             (void)HPL_send(
                 dXdprev, kbprev, MModSub1(myrow, nprow), Cmsgid, Ccomm);
           }
@@ -247,7 +247,7 @@ void HPL_pdtrsv(HPL_T_grid* GRID, HPL_T_pmat* AMAT) {
                       1);
         if(GridIsNotPx1) {
           if(n1pprev) {
-            hipDeviceSynchronize();
+            CHECK_HIP_ERROR(hipDeviceSynchronize());
             (void)HPL_send(dXC + tmp1, n1pprev, Alcol, Rmsgid, Rcomm);
           }
         }
@@ -258,7 +258,7 @@ void HPL_pdtrsv(HPL_T_grid* GRID, HPL_T_pmat* AMAT) {
        */
       if((myrow != rowprev) && (myrow != MModAdd1(rowprev, nprow))) {
         if(kbprev) {
-          hipDeviceSynchronize();
+          CHECK_HIP_ERROR(hipDeviceSynchronize());
           (void)HPL_send(
               dXdprev, kbprev, MModSub1(myrow, nprow), Cmsgid, Ccomm);
         }
@@ -341,7 +341,7 @@ void HPL_pdtrsv(HPL_T_grid* GRID, HPL_T_pmat* AMAT) {
    */
   if(mycol == colprev) {
     if(kbprev) {
-      hipDeviceSynchronize();
+      CHECK_HIP_ERROR(hipDeviceSynchronize());
       (void)HPL_broadcast((void*)(dXR), kbprev, HPL_DOUBLE, rowprev, Ccomm);
     }
   }

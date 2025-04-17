@@ -106,16 +106,22 @@ endif()
 
 # Availability of rocm_check_target_ids command assures that we can also build
 # for gfx90a target
-if(COMMAND rocm_check_target_ids)
-  set(DEFAULT_AMDGPU_TARGETS "gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx908:xnack+;gfx90a:xnack-;gfx90a:xnack+")
-else()
-  set(DEFAULT_AMDGPU_TARGETS "gfx900;gfx906;gfx908;gfx908")
+set(TARGETS "gfx900;gfx906")
+ if(HIP_VERSION VERSION_GREATER_EQUAL "3.7")
+   set(TARGETS "${TARGETS};gfx908")
+ endif()
+ if(HIP_VERSION VERSION_GREATER_EQUAL "4.3")
+   set(TARGETS "${TARGETS};gfx90a")
+ endif()
+ if (HIP_VERSION VERSION_GREATER_EQUAL "5.3")
+   set(TARGETS "${TARGETS};gfx940")
+ endif()
+ if (HIP_VERSION VERSION_GREATER_EQUAL "5.7")
+   set(TARGETS "${TARGETS};gfx941;gfx942")
 endif()
-set(TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
-
 # AMD targets
 foreach(target ${TARGETS})
-  list(APPEND HIP_HIPCC_FLAGS "--amdgpu-target=${target}")
+list(APPEND HIP_HIPCC_FLAGS "--offload-arch=${target}")
 endforeach()
 
 # Target executable
@@ -160,9 +166,10 @@ target_link_libraries(rochpl PRIVATE OpenMP::OpenMP_CXX)
 # Target link libraries
 target_link_libraries(rochpl PRIVATE BLAS::BLAS)
 target_link_libraries(rochpl PRIVATE roc::rocblas)
-target_link_libraries(rochpl PRIVATE roc::roctracer)
-target_link_libraries(rochpl PRIVATE roc::roctx)
-
+if(HPL_TRACING)
+  target_link_libraries(rochpl PRIVATE roc::roctracer)
+  target_link_libraries(rochpl PRIVATE roc::roctx)
+endif()
 # Target properties
 set_target_properties(rochpl PROPERTIES VERSION ${rochpl_VERSION})
 set_target_properties(rochpl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

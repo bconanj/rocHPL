@@ -74,7 +74,7 @@ void HPL_pdupdateTT(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
   if((n <= 0) || (jb <= 0)) { return; }
 
   hipStream_t stream;
-  rocblas_get_stream(handle, &stream);
+   CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
 
   curr  = (PANEL->grid->myrow == PANEL->prow ? 1 : 0);
   L2ptr = PANEL->dL2;
@@ -92,6 +92,7 @@ void HPL_pdupdateTT(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
     /*
      * 1 x Q case
      */
+    CHECK_HIP_ERROR(hipEventRecord(dtrsmStart[UPD], stream));
     rocblas_dtrsm(handle,
                   rocblas_side_left,
                   rocblas_fill_upper,
@@ -104,11 +105,13 @@ void HPL_pdupdateTT(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
                   jb,
                   Aptr,
                   lda);
+    CHECK_HIP_ERROR(hipEventRecord(dtrsmStop[UPD], stream));
     HPL_dlatcpy_gpu(n, jb, Aptr, lda, Uptr, LDU);
   } else {
     /*
      * Compute redundantly row block of U and update trailing submatrix
      */
+    CHECK_HIP_ERROR(hipEventRecord(dtrsmStart[UPD], stream));
     rocblas_dtrsm(handle,
                   rocblas_side_right,
                   rocblas_fill_upper,
@@ -121,13 +124,14 @@ void HPL_pdupdateTT(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
                   jb,
                   Uptr,
                   LDU);
+    CHECK_HIP_ERROR(hipEventRecord(dtrsmStop[UPD], stream));
   }
 
   /*
    * Queue finishing the update
    */
   if(curr != 0) {
-    hipEventRecord(dgemmStart[UPD], stream);
+    CHECK_HIP_ERROR(hipEventRecord(dgemmStart[UPD], stream));
     rocblas_dgemm(handle,
                   rocblas_operation_none,
                   rocblas_operation_transpose,
@@ -142,11 +146,11 @@ void HPL_pdupdateTT(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
                   &one,
                   Mptr(Aptr, jb, 0, lda),
                   lda);
-    hipEventRecord(dgemmStop[UPD], stream);
+    CHECK_HIP_ERROR(hipEventRecord(dgemmStop[UPD], stream));
 
     if(PANEL->grid->nprow > 1) HPL_dlatcpy_gpu(jb, n, Uptr, LDU, Aptr, lda);
   } else {
-    hipEventRecord(dgemmStart[UPD], stream);
+    CHECK_HIP_ERROR(hipEventRecord(dgemmStart[UPD], stream));
     rocblas_dgemm(handle,
                   rocblas_operation_none,
                   rocblas_operation_transpose,
@@ -161,7 +165,7 @@ void HPL_pdupdateTT(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
                   &one,
                   Aptr,
                   lda);
-    hipEventRecord(dgemmStop[UPD], stream);
+    CHECK_HIP_ERROR(hipEventRecord(dgemmStop[UPD], stream));
   }
 
   hipEventRecord(update[UPD], stream);

@@ -77,8 +77,10 @@ void HPL_pdfact(HPL_T_panel* PANEL) {
    */
   double max_value[128];
   int    max_index[128];
+  
+  pdfact_start = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
-  roctxRangePush("pdfact");
+  HPL_TracingPush("pdfact");
 
 #pragma omp parallel shared(max_value, max_index)
   {
@@ -97,7 +99,10 @@ void HPL_pdfact(HPL_T_panel* PANEL) {
                        max_index);
   }
 
-  roctxRangePop();
+  HPL_TracingPop();
+
+  pdfact_end = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
+
 
   // PANEL->A   = Mptr( PANEL->A, 0, jb, PANEL->lda );
   PANEL->dA = Mptr(PANEL->dA, 0, jb, PANEL->dlda);

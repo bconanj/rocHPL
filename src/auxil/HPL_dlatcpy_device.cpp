@@ -105,7 +105,7 @@ void HPL_dlatcpy_gpu(const int     M,
   if((M <= 0) || (N <= 0)) return;
 
   hipStream_t stream;
-  rocblas_get_stream(handle, &stream);
+   CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
 
   dim3 grid_size((M + TILE_DIM - 1) / TILE_DIM, (N + TILE_DIM - 1) / TILE_DIM);
   dim3 block_size(TILE_DIM, BLOCK_ROWS);

@@ -60,6 +60,8 @@
  * Align pointer
  */
 #define HPL_PTR(ptr_, al_) ((((size_t)(ptr_) + (al_)-1) / (al_)) * (al_))
+#define HPL_TracingPush(label)
+#define HPL_TracingPop(label)
 #endif
 /*
  * End of hpl_misc.hpp

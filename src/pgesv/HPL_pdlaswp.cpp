@@ -137,16 +137,16 @@ void HPL_pdlaswp_start(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
   {
     // get the ipivs on the host after the Bcast
     if(PANEL->grid->mycol != PANEL->pcol) {
-      hipMemcpy2DAsync(PANEL->ipiv,
+      CHECK_HIP_ERROR(hipMemcpy2DAsync(PANEL->ipiv,
                        PANEL->jb * sizeof(int),
                        PANEL->dipiv,
                        PANEL->jb * sizeof(int),
                        PANEL->jb * sizeof(int),
                        1,
                        hipMemcpyDeviceToHost,
-                       dataStream);
+                       dataStream));
     }
-    hipStreamSynchronize(dataStream);
+    CHECK_HIP_ERROR(hipStreamSynchronize(dataStream));
 
     // compute spreading info
     HPL_pipid(PANEL, ipl, ipID);
@@ -162,11 +162,16 @@ void HPL_pdlaswp_start(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
    * entry of each column packed in workspace is in fact the row or column
    * offset in U where it should go to.
    */
+  hipStream_t stream;
+  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
   if(myrow == icurrow) {
     // copy needed rows of A into U
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStart[UPD], stream));
     HPL_dlaswp01T(jb, n, dA, lda, dU, LDU, dlindxU);
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStop[UPD], stream));
   } else {
     // copy needed rows from A into U(:, iplen[myrow])
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStart[UPD], stream));
     HPL_dlaswp03T(iplen[myrow + 1] - iplen[myrow],
                   n,
                   dA,
@@ -174,10 +179,11 @@ void HPL_pdlaswp_start(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
                   Mptr(dU, 0, iplen[myrow], LDU),
                   LDU,
                   dlindxU);
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStop[UPD], stream));
   }
 
   // record when packing completes
-  hipEventRecord(swapStartEvent[UPD], computeStream);
+  CHECK_HIP_ERROR(hipEventRecord(swapStartEvent[UPD], computeStream));
 
   /*
    * End of HPL_pdlaswp_start
@@ -340,7 +346,7 @@ void HPL_pdlaswp_exchange(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 #endif
 
     // hipStreamSynchronize(computeStream);
-    hipEventSynchronize(swapStartEvent[UPD]);
+    CHECK_HIP_ERROR(hipEventSynchronize(swapStartEvent[UPD]));
 
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_UPDATE);
@@ -348,10 +354,14 @@ void HPL_pdlaswp_exchange(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 #endif
 
     // send rows to other ranks
+    scatter_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_scatterv(dU, ipcounts, ipoffsets, ipcounts[myrow], icurrow, comm);
+    scatter_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
     // All gather dU
+    gather_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_allgatherv(dU, ipcounts[myrow], ipcounts, ipoffsets, comm);
+    gather_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_LASWP);
@@ -365,7 +375,7 @@ void HPL_pdlaswp_exchange(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 
     // wait for dU to be ready
     // hipStreamSynchronize(computeStream);
-    hipEventSynchronize(swapStartEvent[UPD]);
+    CHECK_HIP_ERROR(hipEventSynchronize(swapStartEvent[UPD]));
 
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_UPDATE);
@@ -373,10 +383,14 @@ void HPL_pdlaswp_exchange(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 #endif
 
     // receive rows from icurrow into dW
+    scatter_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_scatterv(dW, ipcounts, ipoffsets, ipcounts[myrow], icurrow, comm);
+    scatter_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
     // All gather dU
+    gather_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_allgatherv(dU, ipcounts[myrow], ipcounts, ipoffsets, comm);
+    gather_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_LASWP);
@@ -475,9 +489,13 @@ void HPL_pdlaswp_end(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
    */
   if((n <= 0) || (jb <= 0)) return;
 
+  hipStream_t stream;
+  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
   // just local swaps if we're 1xQ
   if(nprow == 1) {
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp00N(jb, n, dA, lda, PANEL->dipiv);
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStop[UPD], stream));
     return;
   }
 
@@ -515,17 +533,23 @@ void HPL_pdlaswp_end(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 
   if(myrow == icurrow) {
     // swap rows local to A on device
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp02T(*ipA, n, dA, lda, dlindxAU, dlindxA);
+    
   } else {
     // Queue inserting recieved rows in W into A on device
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp04T(
         iplen[myrow + 1] - iplen[myrow], n, dA, lda, dW, LDW, dlindxU);
+    
+    
   }
 
   /*
    * Permute U in every process row
    */
   HPL_dlaswp10N(n, jb, dU, LDU, dpermU);
+  CHECK_HIP_ERROR(hipEventRecord(rowScatterStop[UPD], stream));
   /*
    * End of HPL_pdlaswp_endT
    */

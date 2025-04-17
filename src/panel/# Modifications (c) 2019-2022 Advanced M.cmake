@@ -67,15 +67,42 @@ add_library(BLAS::BLAS IMPORTED INTERFACE)
 set_property(TARGET BLAS::BLAS PROPERTY INTERFACE_LINK_LIBRARIES  "${BLAS_LP64_LIBRARIES};${BLAS_SEQ_LIBRARIES};${BLAS_LIBRARIES}")
 
 # Find OpenMP package
-find_package(OpenMP REQUIRED)
+find_package(OpenMP)
+if (NOT OPENMP_FOUND)
+  message("-- OpenMP not found. Compiling WITHOUT OpenMP support.")
+else()
+  option(HPL_OPENMP "Compile WITH OpenMP support." ON)
+endif()
 
 # MPI
 set(MPI_HOME ${HPL_MPI_DIR})
 find_package(MPI REQUIRED)
 
 # Add some paths
-list(APPEND CMAKE_PREFIX_PATH ${ROCBLAS_PATH} ${ROCM_PATH} )
-list(APPEND CMAKE_MODULE_PATH ${ROCM_PATH}/lib/cmake/hip )
+list(APPEND CMAKE_PREFIX_PATH ${ROCBLAS_PATH} ${ROCM_PATH})
+
+find_library(ROCTRACER NAMES roctracer64
+             PATHS ${ROCM_PATH}/lib
+             NO_DEFAULT_PATH)
+find_library(ROCTX NAMES roctx64
+             PATHS ${ROCM_PATH}/lib
+             NO_DEFAULT_PATH)
+
+message("-- roctracer:  ${ROCTRACER}")
+message("-- roctx:      ${ROCTX}")
+
+add_library(roc::roctracer SHARED IMPORTED)
+set_target_properties(roc::roctracer PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${ROCM_PATH}/include"
+  INTERFACE_LINK_LIBRARIES "hip::host"
+  IMPORTED_LOCATION "${ROCTRACER}"
+  IMPORTED_SONAME "libroctracer.so")
+add_library(roc::roctx SHARED IMPORTED)
+set_target_properties(roc::roctx PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${ROCM_PATH}/include"
+  INTERFACE_LINK_LIBRARIES "hip::host"
+  IMPORTED_LOCATION "${ROCTX}"
+  IMPORTED_SONAME "libroctx64.so")
 
 # Find HIP package
 find_package(HIP REQUIRED)
@@ -90,31 +117,6 @@ message("-- rocBLAS include dirs: ${rocblas_INCLUDE_DIRS}")
 message("-- rocBLAS libraries:    ${rocblas_LIBRARIES}")
 
 get_filename_component(ROCBLAS_LIB_PATH ${rocblas_LIBRARIES} DIRECTORY)
-
-if(HPL_TRACING)
-  find_library(ROCTRACER NAMES roctracer64
-               PATHS ${ROCM_PATH}/lib
-               NO_DEFAULT_PATH)
-  find_library(ROCTX NAMES roctx64
-               PATHS ${ROCM_PATH}/lib
-               NO_DEFAULT_PATH)
-
-  message("-- roctracer:  ${ROCTRACER}")
-  message("-- roctx:      ${ROCTX}")
-
-  add_library(roc::roctracer SHARED IMPORTED)
-  set_target_properties(roc::roctracer PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${ROCM_PATH}/include"
-    INTERFACE_LINK_LIBRARIES "hip::host"
-    IMPORTED_LOCATION "${ROCTRACER}"
-    IMPORTED_SONAME "libroctracer.so")
-  add_library(roc::roctx SHARED IMPORTED)
-  set_target_properties(roc::roctx PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${ROCM_PATH}/include"
-    INTERFACE_LINK_LIBRARIES "hip::host"
-    IMPORTED_LOCATION "${ROCTX}"
-    IMPORTED_SONAME "libroctx64.so")
-endif()
 
 # ROCm cmake package
 find_package(ROCM QUIET CONFIG PATHS ${CMAKE_PREFIX_PATH})

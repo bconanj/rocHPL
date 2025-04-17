@@ -16,6 +16,14 @@
 
 #include "hpl.hpp"
 
+void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD);
+
+void print_colls_stats(HPL_T_panel* PANEL);
+
+void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, double time_start, double time_end, int process);
+
+void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL);
+
 void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   /*
    * Purpose
@@ -53,9 +61,6 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   HPL_T_UPD_FUN HPL_pdupdate;
   int N, icurcol = 0, j, jb, jj = 0, jstart, k, mycol, n, nb, nn, npcol, nq,
          tag = MSGID_BEGIN_FACT, test;
-#ifdef HPL_PROGRESS_REPORT
-  double start_time, time, step_time, gflops, step_gflops;
-#endif
 
   // depth        = ALGO->depth;
   const int depth = 1; // NC: Hardcoded now
@@ -68,9 +73,10 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
 
   if(N <= 0) return;
 
-#ifdef HPL_PROGRESS_REPORT
-  start_time = HPL_ptimer_walltime();
-#endif
+  hipStream_t stream;
+  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
+  CHECK_HIP_ERROR(hipEventRecord(beginning, stream));
+  beginning_t = std::chrono::high_resolution_clock::now();
 
   /*
    * Allocate a panel list of length depth + 1 (depth >= 1)
@@ -147,32 +153,10 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   double stepStart, stepEnd;
 
 #ifdef HPL_PROGRESS_REPORT
-#ifdef HPL_DETAILED_TIMING
-  float  smallDgemmTime, largeDgemm1Time, largeDgemm2Time;
-  double smallDgemmGflops, largeDgemm1Gflops, largeDgemm2Gflops;
-
-  if(GRID->myrow == 0 && mycol == 0) {
-    printf("-------------------------------------------------------------------"
-           "-------------------------------------------------------------------"
-           "---------------------------------------------\n");
-    printf("   %%   | Column    | Step Time (s) ||         DGEMM GFLOPS        "
-           " || Panel Copy(s) | pdfact (s) | pmxswp (s) | Lbcast (s) | laswp "
-           "(s) | GPU Sync (s) | Step GFLOPS | Overall GFLOPS\n");
-    printf("       |           |               |  Small   |  First   | Second  "
-           " |               |            |            |            |          "
-           " |              |             |               \n");
-    printf("-------------------------------------------------------------------"
-           "-------------------------------------------------------------------"
-           "---------------------------------------------\n");
-  }
-#else
-  if(GRID->myrow == 0 && mycol == 0) {
-    printf("---------------------------------------------------\n");
-    printf("   %%   | Column    | Step Time (s) | Overall GFLOPS\n");
-    printf("       |           |               |               \n");
-    printf("---------------------------------------------------\n");
-  }
-#endif
+printf("-------------------------------------------------------------------"
+  "-------------------------------------------------------------------"
+  "---------------------------------------------\n");
+  printf("process, Operation, UPD, rows, cols, Start, End\n");
 #endif
 
   /*
@@ -197,7 +181,7 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
       HPL_pdupdate(panel[0], HPL_LOOK_AHEAD);
 
       // when the look ahead update is finished, copy back the current panel
-      hipStreamWaitEvent(dataStream, update[HPL_LOOK_AHEAD], 0);
+      CHECK_HIP_ERROR(hipStreamWaitEvent(dataStream, update[HPL_LOOK_AHEAD], 0));
       HPL_pdpanel_SendToHost(panel[1]);
 
       /* Queue up finishing the second section */
@@ -206,26 +190,13 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
 
 #ifdef HPL_DETAILED_TIMING
       HPL_ptimer(HPL_TIMING_UPDATE);
-      hipEventSynchronize(update[HPL_LOOK_AHEAD]);
+      CHECK_HIP_ERROR(hipEventSynchronize(update[HPL_LOOK_AHEAD]));
       HPL_ptimer(HPL_TIMING_UPDATE);
 #endif
 
       // wait for the panel to arrive
       HPL_pdpanel_Wait(panel[0]);
 
-#ifdef HPL_PROGRESS_REPORT
-#ifdef HPL_DETAILED_TIMING
-      const int curr = (panel[0]->grid->myrow == panel[0]->prow ? 1 : 0);
-      const int mp   = panel[0]->mp - (curr != 0 ? jb : 0);
-
-      // compute the GFLOPs of the look ahead update DGEMM
-      hipEventElapsedTime(&smallDgemmTime,
-                          dgemmStart[HPL_LOOK_AHEAD],
-                          dgemmStop[HPL_LOOK_AHEAD]);
-      smallDgemmGflops =
-          (2.0 * mp * jb * jb) / (1000.0 * 1000.0 * smallDgemmTime);
-#endif
-#endif
 
       /*Panel factorization FLOP count is (2/3)NB^3 - (1/2)NB^2 - (1/6)NB +
        * (N-i*NB)(NB^2-NB)*/
@@ -283,92 +254,24 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_UPDATE);
 #endif
-    hipDeviceSynchronize();
+    CHECK_HIP_ERROR(hipDeviceSynchronize());
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_UPDATE);
 #endif
 
     stepEnd = MPI_Wtime();
 
-#ifdef HPL_PROGRESS_REPORT
-#ifdef HPL_DETAILED_TIMING
-    const int curr = (panel[0]->grid->myrow == panel[0]->prow ? 1 : 0);
-    const int mp   = panel[0]->mp - (curr != 0 ? jb : 0);
+  if(panel[0]->nu0) {
+    print_update_stats(panel[0], HPL_LOOK_AHEAD);
+  } 
+  if(panel[0]->nu2) {
+    print_update_stats(panel[0], HPL_UPD_2);
+  }
 
-    largeDgemm1Time = 0.0;
-    largeDgemm2Time = 0.0;
-    if(panel[0]->nu1) {
-      hipEventElapsedTime(
-          &largeDgemm1Time, dgemmStart[HPL_UPD_1], dgemmStop[HPL_UPD_1]);
-      largeDgemm1Gflops = (2.0 * mp * jb * (panel[0]->nu1)) /
-                          (1000.0 * 1000.0 * (largeDgemm1Time));
-    }
-    if(panel[0]->nu2) {
-      hipEventElapsedTime(
-          &largeDgemm2Time, dgemmStart[HPL_UPD_2], dgemmStop[HPL_UPD_2]);
-      largeDgemm2Gflops = (2.0 * mp * jb * (panel[0]->nu2)) /
-                          (1000.0 * 1000.0 * (largeDgemm2Time));
-    }
-#endif
-    /* if this is process 0,0 and not the first panel */
-    if(GRID->myrow == 0 && mycol == 0 && j > 0) {
-      time      = HPL_ptimer_walltime() - start_time;
-      step_time = stepEnd - stepStart;
-      /*
-      Step FLOP count is (2/3)NB^3 - (1/2)NB^2 - (1/6)NB
-                          + 2*n*NB^2 - n*NB + 2*NB*n^2
-
-      Overall FLOP count is (2/3)(N^3-n^3) - (1/2)(N^2-n^2) - (1/6)(N-n)
-      */
-      step_gflops =
-          ((2.0 / 3.0) * jb * jb * jb - (1.0 / 2.0) * jb * jb -
-           (1.0 / 6.0) * jb + 2.0 * n * jb * jb - jb * n + 2.0 * jb * n * n) /
-          (step_time > 0.0 ? step_time : 1.e-6) / 1.e9;
-      gflops = ((2.0 / 3.0) * (N * (double)N * N - n * (double)n * n) -
-                (1.0 / 2.0) * (N * (double)N - n * (double)n) -
-                (1.0 / 6.0) * ((double)N - (double)n)) /
-               (time > 0.0 ? time : 1.e-6) / 1.e9;
-      printf("%5.1f%% | %09d | ", j * 100.0 / N, j);
-      printf("   %9.7f  |", stepEnd - stepStart);
-
-#ifdef HPL_DETAILED_TIMING
-      if(panel[0]->nu0) {
-        printf(" %9.3e|", smallDgemmGflops);
-      } else {
-        printf("          |");
-      }
-      if(panel[0]->nu2) {
-        printf(" %9.3e|", largeDgemm2Gflops);
-      } else {
-        printf("          |");
-      }
-
-      if(panel[0]->nu1) {
-        printf(" %9.3e|", largeDgemm1Gflops);
-      } else {
-        printf("          |");
-      }
-
-      if(panel[0]->nu0) {
-        printf("   %9.3e   |  %9.3e |  %9.3e |",
-               HPL_ptimer_getStep(HPL_TIMING_COPY),
-               HPL_ptimer_getStep(HPL_TIMING_RPFACT),
-               HPL_ptimer_getStep(HPL_TIMING_MXSWP));
-      } else {
-        printf("               |            |            |");
-      }
-
-      printf("  %9.3e | %9.3e |   %9.3e  |",
-             HPL_ptimer_getStep(HPL_TIMING_LBCAST),
-             HPL_ptimer_getStep(HPL_TIMING_LASWP),
-             HPL_ptimer_getStep(HPL_TIMING_UPDATE));
-
-      printf("  %9.3e  |", step_gflops);
-#endif
-
-      printf("    %9.3e   \n", gflops);
-    }
-#endif
+  if(panel[0]->nu1) {
+    print_update_stats(panel[0], HPL_UPD_1);
+  }
+  print_colls_stats(panel[0]);
 
     /*
      * Circular  of the panel pointers:
@@ -393,7 +296,7 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
 #ifdef HPL_DETAILED_TIMING
   HPL_ptimer(HPL_TIMING_UPDATE);
 #endif
-  hipDeviceSynchronize();
+  CHECK_HIP_ERROR(hipDeviceSynchronize());
 #ifdef HPL_DETAILED_TIMING
   HPL_ptimer(HPL_TIMING_UPDATE);
 #endif
@@ -406,4 +309,162 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
    * Solve upper triangular system
    */
   if(A->info == 0) HPL_pdtrsv(GRID, A);
+}
+
+void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL){
+  if(M>0 && N>0)  
+    print_line(noyau_name, UPD, M, N, time_start, time_end, PANEL->grid->iam);
+}
+
+void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, double time_start, double time_end, int process){
+  std::string upd_name;
+  if(UPD == HPL_LOOK_AHEAD) {
+    upd_name = "Look Ahead";
+  } else if(UPD == HPL_UPD_1) {
+    upd_name = "1";
+  } else if(UPD == HPL_UPD_2) {
+    upd_name = "2";
+  }
+  printf("%i, %s, %s, %i, %i, %f, %f\n", process ,noyau_name.c_str(), upd_name.c_str(), rows, cols, time_start, time_end);
+}
+
+
+void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
+
+  int jb = PANEL->jb;
+  std::string gemm_name = "GEMM";
+  std::string trsm_name = "TRSM";
+  std::string gather_name = "ROWGATHER";
+  std::string scatter_name = "ROWSCATTER";
+  
+  int n=0;
+  if(UPD == HPL_LOOK_AHEAD) {
+    n   = PANEL->nu0;
+  } else if(UPD == HPL_UPD_1) {
+    n   = PANEL->nu1;
+  } else if(UPD == HPL_UPD_2) {
+    n   = PANEL->nu2;
+  }
+
+  const int icurr = (PANEL->grid->myrow == PANEL->prow ? 1 : 0);
+  const int m   = PANEL->mp - (icurr != 0 ? jb : 0);
+
+
+  if (UPD==HPL_LOOK_AHEAD) {
+
+    float trsmStart=0.;
+    float gemmStart=0.;
+    float gatherStart=0.;
+    float scatterStart=0.;
+    float trsmStop=0.;
+    float gemmStop=0.;
+    float gatherStop=0.;
+    float scatterStop=0.;
+
+    if (PANEL->grid->mycol==MModAdd1(PANEL->pcol, PANEL->grid->npcol)) {
+      CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStart,
+        beginning,
+        dtrsmStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStop,
+        beginning,
+          dtrsmStop[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStart,
+        beginning,
+        rowGatherStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStop,
+        beginning,
+        rowGatherStop[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStart,
+        beginning,
+        rowScatterStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStop,
+        beginning,
+        rowScatterStop[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gemmStart,
+        beginning,
+        dgemmStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gemmStop,
+        beginning, 
+        dgemmStop[UPD]));
+    }
+    else{
+      n=0;
+    }
+
+    print_stat(gemm_name, UPD, m, n, gemmStart, gemmStop, PANEL);
+    print_stat(trsm_name, UPD, m, n, trsmStart, trsmStop, PANEL);
+    print_stat(gather_name, UPD, m, n, gatherStart, gatherStop, PANEL);
+    print_stat(scatter_name, UPD, m, n ,scatterStart, scatterStop, PANEL);
+    
+  } else {
+
+    float trsmStart=0.;
+    float gemmStart=0.;
+    float gatherStart=0.;
+    float scatterStart=0.;
+    float trsmStop=0.;
+    float gemmStop=0.;
+    float gatherStop=0.;
+    float scatterStop=0.;
+
+    if (n>0 && m>0) {
+      CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStart,
+        beginning,
+        dtrsmStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStop,
+        beginning,
+          dtrsmStop[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStart,
+        beginning,
+        rowGatherStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStop,
+        beginning,
+        rowGatherStop[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStart,
+        beginning,
+        rowScatterStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStop,
+        beginning,
+        rowScatterStop[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gemmStart,
+        beginning,
+        dgemmStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gemmStop,
+        beginning, 
+        dgemmStop[UPD]));
+    }
+
+    print_stat(gemm_name, UPD, m, n, gemmStart, gemmStop, PANEL);
+    print_stat(trsm_name, UPD, m, n, trsmStart, trsmStop, PANEL);
+    print_stat(gather_name, UPD, m, n, gatherStart, gatherStop, PANEL);
+    print_stat(scatter_name, UPD, m, n ,scatterStart, scatterStop, PANEL);
+  }
+}
+
+void print_colls_stats(HPL_T_panel* PANEL){
+  const int icurr = (PANEL->grid->myrow == PANEL->prow ? 1 : 0);
+  int jb = PANEL->jb;
+
+  std::string pdfact_name = "pdfact" ;
+  std::string bcast_name = "bcast"  ;
+  std::string gatherv_name = "gatherv";
+  std::string scatterv_name = "scatterv";
+
+
+  if (PANEL->grid->mycol!=MModAdd1(PANEL->pcol, PANEL->grid->npcol)) {
+    pdfact_start = 0.;
+    pdfact_end = 0.;
+    gather_start[HPL_LOOK_AHEAD]=0.;
+    gather_end[HPL_LOOK_AHEAD]=0.;
+    scatter_start[HPL_LOOK_AHEAD]=0.;
+    scatter_end[HPL_LOOK_AHEAD]=0.;
+  }
+  print_stat(pdfact_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, pdfact_start, pdfact_end, PANEL);
+  print_stat(bcast_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, bcast_start, bcast_end, PANEL);
+  print_stat(gatherv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, gather_start[HPL_LOOK_AHEAD], gather_end[HPL_LOOK_AHEAD], PANEL);
+  print_stat(gatherv_name, HPL_UPD_1, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, gather_start[HPL_UPD_1], gather_end[HPL_UPD_1], PANEL);
+  print_stat(gatherv_name, HPL_UPD_2, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, gather_start[HPL_UPD_2], gather_end[HPL_UPD_2], PANEL);
+  print_stat(scatterv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, scatter_start[HPL_LOOK_AHEAD], scatter_end[HPL_LOOK_AHEAD], PANEL);
+  print_stat(scatterv_name, HPL_UPD_1, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, scatter_start[HPL_UPD_1], scatter_end[HPL_UPD_1], PANEL);
+  print_stat(scatterv_name, HPL_UPD_2, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, scatter_start[HPL_UPD_2], scatter_end[HPL_UPD_2], PANEL);
 }
