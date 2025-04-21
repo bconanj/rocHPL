@@ -46,7 +46,9 @@ int HPL_pdpanel_bcast(HPL_T_panel* PANEL) {
   /*
    * Single Bcast call
    */
+   bcast_start = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
   int err = HPL_bcast(PANEL->A0, PANEL->len, root, comm, PANEL->algo->btopo);
+  bcast_end = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
 #ifdef HPL_DETAILED_TIMING
   HPL_ptimer(HPL_TIMING_LBCAST);

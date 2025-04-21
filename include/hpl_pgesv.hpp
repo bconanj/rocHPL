@@ -30,7 +30,7 @@
 #include "hpl_pauxil.hpp"
 #include "hpl_panel.hpp"
 #include "hpl_pfact.hpp"
-
+#include "hpl_ptimer.hpp"
 /*
  * ---------------------------------------------------------------------
  * #typedefs and data structures
@@ -112,7 +112,15 @@ extern hipEvent_t swapStartEvent[HPL_N_UPD], update[HPL_N_UPD];
 extern hipEvent_t swapUCopyEvent[HPL_N_UPD], swapWCopyEvent[HPL_N_UPD];
 extern hipEvent_t dgemmStart[HPL_N_UPD], dgemmStop[HPL_N_UPD];
 extern hipEvent_t pfactStart, pfactStop;
+extern hipEvent_t dgemmStart[HPL_N_UPD], dgemmStop[HPL_N_UPD];
+extern hipEvent_t dtrsmStart[HPL_N_UPD], dtrsmStop[HPL_N_UPD];
+extern hipEvent_t rowGatherStart[HPL_N_UPD], rowGatherStop[HPL_N_UPD];
+extern hipEvent_t rowScatterStart[HPL_N_UPD], rowScatterStop[HPL_N_UPD];
+extern hipEvent_t beginning;
 
+extern double bcast_start, scatter_start[HPL_N_UPD], gather_start[HPL_N_UPD];
+extern double bcast_end, scatter_end[HPL_N_UPD], gather_end[HPL_N_UPD];
+extern timePoint_t beginning_t;
 /*
  * ---------------------------------------------------------------------
  * #define macro constants

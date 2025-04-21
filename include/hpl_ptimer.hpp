@@ -21,7 +21,7 @@
  * ---------------------------------------------------------------------
  */
 #include "hpl_pmisc.hpp"
-
+#include <chrono>
 /*
  * ---------------------------------------------------------------------
  * #define macro constants
@@ -35,6 +35,9 @@
  * type definitions
  * ---------------------------------------------------------------------
  */
+
+using timePoint_t = std::chrono::time_point<std::chrono::high_resolution_clock>;
+
 typedef enum { HPL_WALL_PTIME = 101, HPL_CPU_PTIME = 102 } HPL_T_PTIME;
 
 typedef enum {

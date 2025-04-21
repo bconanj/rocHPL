@@ -63,7 +63,6 @@ int HPL_bcast(double*   SBUF,
   ierr = MPI_Bcast(SBUF, SCOUNT, MPI_DOUBLE, ROOT, COMM);
 
 #else
-
   switch(top) {
     case HPL_1RING_M: ierr = HPL_bcast_1rinM(SBUF, SCOUNT, ROOT, COMM); break;
     case HPL_1RING: ierr = HPL_bcast_1ring(SBUF, SCOUNT, ROOT, COMM); break;
@@ -73,7 +72,6 @@ int HPL_bcast(double*   SBUF,
     case HPL_BLONG: ierr = HPL_bcast_blong(SBUF, SCOUNT, ROOT, COMM); break;
     default: ierr = HPL_FAILURE;
   }
-
 #endif
 
   HPL_TracingPop();

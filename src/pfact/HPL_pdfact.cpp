@@ -71,7 +71,7 @@ void HPL_pdfact(HPL_T_panel* PANEL) {
 #ifdef HPL_DETAILED_TIMING
   HPL_ptimer(HPL_TIMING_RPFACT);
 #endif
-
+  
   /*Copy current panel into workspace*/
   HPL_dlacpy(
       PANEL->mp, PANEL->jb, PANEL->A, PANEL->lda, PANEL->A0, PANEL->lda0);
