@@ -111,9 +111,12 @@ void HPL_pdlaswp_start(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
    */
   if(myrow == icurrow) {
     // copy needed rows of A into U
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStart[UPD], stream));
     HPL_dlaswp01T(jb, n, A, lda, U, LDU, lindxU);
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStop[UPD], stream));
   } else {
     // copy needed rows from A into U(:, iplen[myrow])
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStart[UPD], stream));
     HPL_dlaswp03T(iplen[myrow + 1] - iplen[myrow],
                   n,
                   A,
@@ -121,6 +124,7 @@ void HPL_pdlaswp_start(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
                   Mptr(U, 0, iplen[myrow], LDU),
                   LDU,
                   lindxU);
+    CHECK_HIP_ERROR(hipEventRecord(rowGatherStop[UPD], stream));
   }
 
   // record when packing completes
@@ -384,15 +388,18 @@ void HPL_pdlaswp_end(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 
   // just local swaps if we're 1xQ
   if(nprow == 1) {
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp00N(jb, n, A, lda, permU);
     return;
   }
 
   if(myrow == icurrow) {
     // swap rows local to A on device
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp02T(*ipA, n, A, lda, lindxAU, lindxA);
   } else {
     // Queue inserting recieved rows in W into A on device
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp04T(iplen[myrow + 1] - iplen[myrow], n, A, lda, W, LDW, lindxU);
   }
 
@@ -400,6 +407,7 @@ void HPL_pdlaswp_end(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
    * Permute U in every process row
    */
   HPL_dlaswp10N(n, jb, U, LDU, permU);
+  CHECK_HIP_ERROR(hipEventRecord(rowScatterStop[UPD], stream));
   /*
    * End of HPL_pdlaswp_endT
    */
