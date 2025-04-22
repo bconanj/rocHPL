@@ -285,16 +285,20 @@ void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, floa
 
 void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL){
   bool am_i_0 = PANEL->grid->mycol==0 && PANEL->grid->myrow==0;
-  double *Ptimes_start = am_i_0 ? (double*)malloc( sizeof(double)*PANEL->grid->nprocs) : nullptr;
-  double *Ptimes_end = am_i_0 ? (double*)malloc( sizeof(double)*PANEL->grid->nprocs) : nullptr;
-  int *Prows = am_i_0 ? (int*)malloc(sizeof(int)*PANEL->grid->nprocs) : nullptr;
-  int *Pcols = am_i_0 ? (int*)malloc(sizeof(int)*PANEL->grid->nprocs) : nullptr;
-  MPI_Gather(&time_start, 1, MPI_DOUBLE, Ptimes_start, PANEL->grid->nprocs, MPI_DOUBLE, 0, PANEL->grid->all_comm);
-  MPI_Gather(&time_end, 1, MPI_DOUBLE, Ptimes_end, PANEL->grid->nprocs, MPI_DOUBLE, 0, PANEL->grid->all_comm);
-  MPI_Gather(&M, 1, MPI_INT, Prows, PANEL->grid->nprocs, MPI_INT, 0, PANEL->grid->all_comm);
-  MPI_Gather(&N, 1, MPI_INT, Pcols, PANEL->grid->nprocs, MPI_INT, 0, PANEL->grid->all_comm);
+  int nb_process = PANEL->grid->nprocs;
+  if(nb_process < 1){
+    printf("%i processus", nb_process);
+  }
+  double *Ptimes_start = am_i_0 ? (double*)malloc( sizeof(double)*nb_process) : nullptr;
+  double *Ptimes_end = am_i_0 ? (double*)malloc( sizeof(double)*nb_process) : nullptr;
+  int *Prows = am_i_0 ? (int*)malloc(sizeof(int)*nb_process) : nullptr;
+  int *Pcols = am_i_0 ? (int*)malloc(sizeof(int)*nb_process) : nullptr;
+  MPI_Gather(&time_start, 1, MPI_DOUBLE, Ptimes_start, nb_process, MPI_DOUBLE, 0, PANEL->grid->all_comm);
+  MPI_Gather(&time_end, 1, MPI_DOUBLE, Ptimes_end, nb_process, MPI_DOUBLE, 0, PANEL->grid->all_comm);
+  MPI_Gather(&M, 1, MPI_INT, Prows, nb_process, MPI_INT, 0, PANEL->grid->all_comm);
+  MPI_Gather(&N, 1, MPI_INT, Pcols, nb_process, MPI_INT, 0, PANEL->grid->all_comm);
   if(am_i_0){
-    for(int i = 0; i<PANEL->grid->nprocs;++i){
+    for(int i = 0; i<nb_process;++i){
       /*if(Prows[i]>0 && Pcols[i]>0)*/
         print_line(noyau_name, UPD, Prows[i], Pcols[i], Ptimes_start[i], Ptimes_end[i], i);
       
