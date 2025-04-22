@@ -80,6 +80,9 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   /*
    * initialize the first panel
    */
+  hipStream_t stream;
+  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
+  CHECK_HIP_ERROR(hipEventRecord(beginning, stream));
   nq     = HPL_numroc(N + 1, nb, nb, mycol, 0, npcol);
   nn     = N;
   jstart = 0;
