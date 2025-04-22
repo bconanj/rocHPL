@@ -13,7 +13,7 @@
 
 rocblas_handle handle;
 
-hipStream_t computeStream, dataStream, beginning;
+hipStream_t computeStream, dataStream;
 
 hipEvent_t swapStartEvent[HPL_N_UPD], update[HPL_N_UPD];
 hipEvent_t dgemmStart[HPL_N_UPD], dgemmStop[HPL_N_UPD];
@@ -21,7 +21,7 @@ hipEvent_t dtrsmStart[HPL_N_UPD], dtrsmStop[HPL_N_UPD];
 
 hipEvent_t rowGatherStart[HPL_N_UPD], rowGatherStop[HPL_N_UPD];
 hipEvent_t rowScatterStart[HPL_N_UPD], rowScatterStop[HPL_N_UPD];
-hipEvent_t pfactStart, pfactStop;
+hipEvent_t pfactStart, pfactStop,, beginning;
 
 static char host_name[MPI_MAX_PROCESSOR_NAME];
 
