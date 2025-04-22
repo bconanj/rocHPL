@@ -18,9 +18,9 @@
 
 void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD);
 
-void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, double time_start, double time_end, , int process);
+void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, double time_start, double time_end, int process);
 
-void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, , HPL_T_panel* PANEL);
+void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL);
 
 void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   /*
