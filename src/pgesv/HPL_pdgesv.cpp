@@ -74,7 +74,7 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
   Ptimes_start = (double*)malloc( sizeof(double)*nb_process);
   Ptimes_end = (double*)malloc( sizeof(double)*nb_process);
   Prows =(int*)malloc(sizeof(int)*nb_process);
-  Pcols = (int*)malloc(sizeof(int)*nb_process)
+  Pcols = (int*)malloc(sizeof(int)*nb_process);
 }
 
   
