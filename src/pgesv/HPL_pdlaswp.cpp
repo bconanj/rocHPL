@@ -109,6 +109,8 @@ void HPL_pdlaswp_start(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
    * entry of each column packed in workspace is in fact the row or column
    * offset in U where it should go to.
    */
+  hipStream_t stream;
+  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
   if(myrow == icurrow) {
     // copy needed rows of A into U
     CHECK_HIP_ERROR(hipEventRecord(rowGatherStart[UPD], stream));
@@ -386,6 +388,8 @@ void HPL_pdlaswp_end(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
   int* ipA   = PANEL->ipiv + 5 * jb;
   int* iplen = ipA + 1;
 
+  hipStream_t stream;
+  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
   // just local swaps if we're 1xQ
   if(nprow == 1) {
     CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
