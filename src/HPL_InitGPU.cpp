@@ -89,6 +89,7 @@ void HPL_InitGPU(const HPL_T_grid* GRID) {
 
   CHECK_HIP_ERROR(hipEventCreate(&pfactStart));
   CHECK_HIP_ERROR(hipEventCreate(&pfactStop));
+  CHECK_HIP_ERROR(hipEventCreate(&beginning));
 
   CHECK_HIP_ERROR(hipEventCreate(dtrsmStart + HPL_LOOK_AHEAD));
   CHECK_HIP_ERROR(hipEventCreate(dtrsmStart + HPL_UPD_1));
@@ -113,8 +114,6 @@ void HPL_InitGPU(const HPL_T_grid* GRID) {
   CHECK_HIP_ERROR(hipEventCreate(rowScatterStop + HPL_LOOK_AHEAD));
   CHECK_HIP_ERROR(hipEventCreate(rowScatterStop + HPL_UPD_1));
   CHECK_HIP_ERROR(hipEventCreate(rowScatterStop + HPL_UPD_2));
-
-  CHECK_HIP_ERROR(hipEventCreate(&beginning));
 
   /* Create a rocBLAS handle */
   CHECK_ROCBLAS_ERROR(rocblas_create_handle(&handle));
@@ -154,6 +153,7 @@ void HPL_FreeGPU() {
 
   CHECK_HIP_ERROR(hipEventDestroy(pfactStart));
   CHECK_HIP_ERROR(hipEventDestroy(pfactStop));
+  CHECK_HIP_ERROR(hipEventDestroy(beginning));
 
   CHECK_HIP_ERROR(hipStreamDestroy(computeStream));
   CHECK_HIP_ERROR(hipStreamDestroy(dataStream));
@@ -182,5 +182,4 @@ void HPL_FreeGPU() {
   CHECK_HIP_ERROR(hipEventDestroy(rowScatterStop[HPL_UPD_1]));
   CHECK_HIP_ERROR(hipEventDestroy(rowScatterStop[HPL_UPD_2]));
 
-  CHECK_HIP_ERROR(hipEventDestroy(&beginning));
 }
