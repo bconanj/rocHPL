@@ -60,6 +60,13 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   double start_time, time, step_time, gflops, step_gflops;
 #endif
 
+if(GRID->myrow == 0 && GRID->mycol == 0) {
+  printf("-------------------------------------------------------------------"
+         "-------------------------------------------------------------------"
+         "------------------------------\n");
+  printf("process, Operation, UPD, rows, cols, Start, End\n");
+}
+
   
   myrow        = GRID->myrow;
   mycol        = GRID->mycol;
@@ -142,16 +149,6 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   }
 
   double stepStart, stepEnd;
-
-#ifdef HPL_PROGRESS_REPORT
- if(GRID->myrow == 0 && mycol == 0) {
-    printf("-------------------------------------------------------------------"
-           "-------------------------------------------------------------------"
-           "------------------------------\n");
-    printf("process, Operation, UPD, rows, cols, Start, End\n");
-  }
-#endif
-
   /*
    * Main loop over the remaining columns of A
    */
