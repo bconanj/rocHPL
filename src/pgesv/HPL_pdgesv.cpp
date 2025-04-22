@@ -22,6 +22,11 @@ void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols
 
 void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL);
 
+double *Ptimes_start;
+double *Ptimes_end;
+int *Prows;
+int *Pcols;
+
 void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   /*
    * Purpose
@@ -65,6 +70,11 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
          "-------------------------------------------------------------------"
          "------------------------------\n");
   printf("process, Operation, UPD, rows, cols, Start, End\n");
+  int nb_process = GRID->nprocs;
+  Ptimes_start = (double*)malloc( sizeof(double)*nb_process);
+  Ptimes_end = (double*)malloc( sizeof(double)*nb_process);
+  Prows =(int*)malloc(sizeof(int)*nb_process);
+  Pcols = (int*)malloc(sizeof(int)*nb_process)
 }
 
   
@@ -274,6 +284,12 @@ if(curr->nu1) {
    * Solve upper triangular system
    */
   HPL_pdtrsv(GRID, A);
+  if(GRID->mycol==0 && GRID->myrow==0){
+    free(Ptimes_start);
+    free(Ptimes_end);
+    free(Prows);
+    free(Pcols);
+  }
 }
 
 void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, float time_start, float time_end, HPL_T_panel* PANEL){
@@ -286,10 +302,6 @@ void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, doub
   if(nb_process < 1){
     printf("%i processus", nb_process);
   }
-  double *Ptimes_start = am_i_0 ? (double*)malloc( sizeof(double)*nb_process) : nullptr;
-  double *Ptimes_end = am_i_0 ? (double*)malloc( sizeof(double)*nb_process) : nullptr;
-  int *Prows = am_i_0 ? (int*)malloc(sizeof(int)*nb_process) : nullptr;
-  int *Pcols = am_i_0 ? (int*)malloc(sizeof(int)*nb_process) : nullptr;
   MPI_Gather(&time_start, 1, MPI_DOUBLE, Ptimes_start, nb_process, MPI_DOUBLE, 0, PANEL->grid->all_comm);
   MPI_Gather(&time_end, 1, MPI_DOUBLE, Ptimes_end, nb_process, MPI_DOUBLE, 0, PANEL->grid->all_comm);
   MPI_Gather(&M, 1, MPI_INT, Prows, nb_process, MPI_INT, 0, PANEL->grid->all_comm);
@@ -300,12 +312,6 @@ void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, doub
         print_line(noyau_name, UPD, Prows[i], Pcols[i], Ptimes_start[i], Ptimes_end[i], i);
       
     }
-  }
-  if(am_i_0){
-    free(Ptimes_start);
-    free(Ptimes_end);
-    free(Prows);
-    free(Pcols);
   }
 }
 
