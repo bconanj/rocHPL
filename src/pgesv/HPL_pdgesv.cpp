@@ -60,9 +60,7 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   double start_time, time, step_time, gflops, step_gflops;
 #endif
 
-  hipStream_t stream;
-  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
-  CHECK_HIP_ERROR(hipEventRecord(beginning, stream));
+  
   myrow        = GRID->myrow;
   mycol        = GRID->mycol;
   npcol        = GRID->npcol;

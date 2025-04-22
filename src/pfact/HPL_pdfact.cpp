@@ -71,7 +71,11 @@ void HPL_pdfact(HPL_T_panel* PANEL) {
 #ifdef HPL_DETAILED_TIMING
   HPL_ptimer(HPL_TIMING_RPFACT);
 #endif
-
+  hipStream_t stream;
+  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
+  if(jb==0){
+    CHECK_HIP_ERROR(hipEventRecord(beginning, stream));
+  }
   /*Copy current panel into workspace*/
   HPL_dlacpy(
       PANEL->mp, PANEL->jb, PANEL->A, PANEL->lda, PANEL->A0, PANEL->lda0);
@@ -81,8 +85,6 @@ void HPL_pdfact(HPL_T_panel* PANEL) {
    */
   HPL_TracingPush("pdfact");
 
-  hipStream_t stream;
-  CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
   CHECK_HIP_ERROR(hipEventRecord(pfactStart, stream));
 
   PANEL->algo->rffun(PANEL, PANEL->mp, jb, 0);
