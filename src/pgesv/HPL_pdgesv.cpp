@@ -257,15 +257,15 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
     stepEnd = MPI_Wtime();
 
 #ifdef HPL_PROGRESS_REPORT
-if(curr[0]->nu0) {
-  print_update_stats(*curr, HPL_LOOK_AHEAD);
+if(curr->nu0) {
+  print_update_stats(curr, HPL_LOOK_AHEAD);
 } 
-if(curr[0]->nu2) {
-  print_update_stats(*curr, HPL_UPD_2);
+if(curr->nu2) {
+  print_update_stats(curr, HPL_UPD_2);
 }
 
-if(curr[0]->nu1) {
-  print_update_stats(*curr, HPL_UPD_1);
+if(curr->nu1) {
+  print_update_stats(curr, HPL_UPD_1);
 }
 #endif
 
