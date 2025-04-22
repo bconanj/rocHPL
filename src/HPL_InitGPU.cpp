@@ -23,6 +23,10 @@ hipEvent_t rowGatherStart[HPL_N_UPD], rowGatherStop[HPL_N_UPD];
 hipEvent_t rowScatterStart[HPL_N_UPD], rowScatterStop[HPL_N_UPD];
 hipEvent_t pfactStart, pfactStop, beginning;
 
+double bcast_start, scatter_start[HPL_N_UPD], gather_start[HPL_N_UPD];
+double bcast_end, scatter_end[HPL_N_UPD], gather_end[HPL_N_UPD];
+timePoint_t beginning_t;
+
 static char host_name[MPI_MAX_PROCESSOR_NAME];
 
 /*

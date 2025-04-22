@@ -18,6 +18,8 @@
 
 void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD);
 
+void print_colls_stats(HPL_T_panel* PANEL);
+
 void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, double time_start, double time_end, int process);
 
 void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL);
@@ -95,11 +97,17 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
   HPL_T_panel* next = &(A->panel[1]);
 
   /*
-   * initialize the first panel
-   */
+   * initialize the reference point for hip event and clocks
+  */
   hipStream_t stream;
   CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
   CHECK_HIP_ERROR(hipEventRecord(beginning, stream));
+  beginning_t = std::chrono::high_resolution_clock::now();
+
+  /*
+   * initialize the first panel
+   */
+
   nq     = HPL_numroc(N + 1, nb, nb, mycol, 0, npcol);
   nn     = N;
   jstart = 0;
@@ -127,6 +135,27 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
    */
   jb = jstart;
   jb = Mmin(jb, nb);
+
+  /*
+   * reset timers
+  pdfact_start=0.;
+  bcast_start=0.;
+  scatter_start[HPL_LOOK_AHEAD]=0.;
+  scatter_start[HPL_UPD_1]=0.;
+  scatter_start[HPL_UPD_2]=0.;
+  gather_start[HPL_LOOK_AHEAD]=0.;
+  gather_start[HPL_UPD_1]=0.;
+  gather_start[HPL_UPD_2]=0.;
+  pdfact_start=0.;
+  bcast_start=0.;
+  scatter_start[HPL_LOOK_AHEAD]=0.;
+  scatter_start[HPL_UPD_1]=0.;
+  scatter_start[HPL_UPD_2]=0.;
+  gather_start[HPL_LOOK_AHEAD]=0.;
+  gather_start[HPL_UPD_1]=0.;
+  gather_start[HPL_UPD_2]=0.;
+  */
+
   /*
    * Factor and broadcast 0-th panel
    */
@@ -257,6 +286,7 @@ if(curr->nu2) {
 if(curr->nu1) {
   print_update_stats(curr, HPL_UPD_1);
 }
+print_colls_stats(curr);
 #endif
 
     std::swap(curr, next);
@@ -438,5 +468,31 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
     print_stat(gather_name, UPD, m, n, gatherStart, gatherStop, PANEL);
     print_stat(scatter_name, UPD, m, n ,scatterStart, scatterStop, PANEL);
   }
+}
 
+void print_colls_stats(HPL_T_panel* PANEL){
+  double pdfact_start = 0.;
+  double pdfact_end = 0.;
+  if (PANEL->grid->mycol==MModAdd1(PANEL->pcol, PANEL->grid->npcol)) {
+    CHECK_HIP_ERROR(hipEventElapsedTime(&pdfact_start,
+      beginning,
+      pfactStart));
+    CHECK_HIP_ERROR(hipEventElapsedTime(&pdfact_end,
+      beginning, 
+      pfactStop[UPD]));
+  }
+  else{
+    gather_start[HPL_LOOK_AHEAD]=0.;
+    gather_end[HPL_LOOK_AHEAD]=0.;
+    scatter_start[HPL_LOOK_AHEAD]=0.;
+    scatter_end[HPL_LOOK_AHEAD]=0.;
+  }
+  print_stat("pdfact", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, pdfact_start, pdfact_end, PANEL);
+  print_stat("bcast", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, bcast_start, bcast_end, PANEL);
+  print_stat("gatherv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, gather_start[HPL_LOOK_AHEAD], gather_end[HPL_LOOK_AHEAD], PANEL);
+  print_stat("gatherv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, gather_start[HPL_UPD_1], gather_end[HPL_UPD_1], PANEL);
+  print_stat("gatherv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, gather_start[HPL_UPD_2], gather_end[HPL_UPD_2], PANEL);
+  print_stat("scatterv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, scatter_start[HPL_LOOK_AHEAD], scatter_end[HPL_LOOK_AHEAD], PANEL);
+  print_stat("scatterv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, scatter_start[HPL_UPD_1], scatter_end[HPL_UPD_1], PANEL);
+  print_stat("scatterv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, scatter_start[HPL_UPD_2], scatter_end[HPL_UPD_2], PANEL);
 }

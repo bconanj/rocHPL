@@ -254,6 +254,7 @@ void HPL_pdlaswp_exchange(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_UPDATE);
 #endif
+  
 
     // hipStreamSynchronize(computeStream);
     CHECK_HIP_ERROR(hipEventSynchronize(swapStartEvent[UPD]));
@@ -264,10 +265,14 @@ void HPL_pdlaswp_exchange(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 #endif
 
     // send rows to other ranks
+    scatter_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_scatterv(U, ipcounts, ipoffsets, ipcounts[myrow], icurrow, comm);
+    scatter_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
     // All gather U
+    gather_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_allgatherv(U, ipcounts[myrow], ipcounts, ipoffsets, comm);
+    gather_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_LASWP);

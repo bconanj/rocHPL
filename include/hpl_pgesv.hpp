@@ -118,6 +118,9 @@ extern hipEvent_t rowGatherStart[HPL_N_UPD], rowGatherStop[HPL_N_UPD];
 extern hipEvent_t rowScatterStart[HPL_N_UPD], rowScatterStop[HPL_N_UPD];
 extern hipEvent_t beginning;
 
+extern double bcast_start, scatter_start[HPL_N_UPD], gather_start[HPL_N_UPD];
+extern double bcast_end, scatter_end[HPL_N_UPD], gather_end[HPL_N_UPD];
+extern timePoint_t beginning_t;
 /*
  * ---------------------------------------------------------------------
  * #define macro constants
