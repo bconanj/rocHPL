@@ -21,7 +21,7 @@ hipEvent_t dtrsmStart[HPL_N_UPD], dtrsmStop[HPL_N_UPD];
 
 hipEvent_t rowGatherStart[HPL_N_UPD], rowGatherStop[HPL_N_UPD];
 hipEvent_t rowScatterStart[HPL_N_UPD], rowScatterStop[HPL_N_UPD];
-hipEvent_t pfactStart, pfactStop,, beginning;
+hipEvent_t pfactStart, pfactStop, beginning;
 
 static char host_name[MPI_MAX_PROCESSOR_NAME];
 
@@ -114,7 +114,7 @@ void HPL_InitGPU(const HPL_T_grid* GRID) {
   CHECK_HIP_ERROR(hipEventCreate(rowScatterStop + HPL_UPD_1));
   CHECK_HIP_ERROR(hipEventCreate(rowScatterStop + HPL_UPD_2));
 
-  CHECK_HIP_ERROR(hipEventCreate(beginning));
+  CHECK_HIP_ERROR(hipEventCreate(&beginning));
 
   /* Create a rocBLAS handle */
   CHECK_ROCBLAS_ERROR(rocblas_create_handle(&handle));
@@ -182,5 +182,5 @@ void HPL_FreeGPU() {
   CHECK_HIP_ERROR(hipEventDestroy(rowScatterStop[HPL_UPD_1]));
   CHECK_HIP_ERROR(hipEventDestroy(rowScatterStop[HPL_UPD_2]));
 
-  CHECK_HIP_ERROR(hipEventDestroy(beginning));
+  CHECK_HIP_ERROR(hipEventDestroy(&beginning));
 }
