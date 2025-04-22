@@ -17,7 +17,6 @@ hipStream_t computeStream, dataStream, beginning;
 
 hipEvent_t swapStartEvent[HPL_N_UPD], update[HPL_N_UPD];
 hipEvent_t dgemmStart[HPL_N_UPD], dgemmStop[HPL_N_UPD];
-hipEvent_t dgemmStart[HPL_N_UPD], dgemmStop[HPL_N_UPD];
 hipEvent_t dtrsmStart[HPL_N_UPD], dtrsmStop[HPL_N_UPD];
 
 hipEvent_t rowGatherStart[HPL_N_UPD], rowGatherStop[HPL_N_UPD];
