@@ -342,6 +342,9 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
   int jb = PANEL->jb;
   std::string gemm_name = "GEMM";
   std::string trsm_name = "TRSM";
+  std::string gather_name = "ROWGATHER";
+  std::string scatter_name = "ROWSCATTER";
+  
   int n=0;
   if(UPD == HPL_LOOK_AHEAD) {
     n   = PANEL->nu0;
@@ -359,8 +362,12 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 
     float trsmStart=0.;
     float gemmStart=0.;
+    float gatherStart=0.;
+    float scatterStart=0.;
     float trsmStop=0.;
     float gemmStop=0.;
+    float gatherStop=0.;
+    float scatterStop=0.;
 
     if (PANEL->grid->mycol==MModAdd1(PANEL->pcol, PANEL->grid->npcol)) {
       CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStart,
@@ -369,7 +376,18 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
       CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStop,
         beginning,
           dtrsmStop[UPD]));
-
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStart,
+        beginning,
+        rowGatherStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStop,
+        beginning,
+        rowGatherStop[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStart,
+        beginning,
+        rowScatterStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStop,
+        beginning,
+        rowScatterStop[UPD]));
       CHECK_HIP_ERROR(hipEventElapsedTime(&gemmStart,
             beginning,
             dgemmStart[UPD]));
@@ -383,13 +401,19 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 
     print_stat(gemm_name, UPD, m, n, gemmStart, gemmStop, PANEL);
     print_stat(trsm_name, UPD, m, n, trsmStart, trsmStop, PANEL);
+    print_stat(gather_name, UPD, m, n, gatherStart, gatherStop, PANEL);
+    print_stat(scatter_name, UPD, m, n ,scatterStart, scatterStop, PANEL);
     
   } else {
 
     float trsmStart=0.;
     float gemmStart=0.;
+    float gatherStart=0.;
+    float scatterStart=0.;
     float trsmStop=0.;
     float gemmStop=0.;
+    float gatherStop=0.;
+    float scatterStop=0.;
 
     if (n>0 && m>0) {
       CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStart,
@@ -398,7 +422,18 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
       CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStop,
         beginning,
           dtrsmStop[UPD]));
-
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStart,
+        beginning,
+        rowGatherStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStop,
+        beginning,
+        rowGatherStop[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStart,
+        beginning,
+        rowScatterStart[UPD]));
+      CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStop,
+        beginning,
+        rowScatterStop[UPD]));
       CHECK_HIP_ERROR(hipEventElapsedTime(&gemmStart,
             beginning,
             dgemmStart[UPD]));
@@ -409,6 +444,8 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 
     print_stat(gemm_name, UPD, m, n, gemmStart, gemmStop, PANEL);
     print_stat(trsm_name, UPD, m, n, trsmStart, trsmStop, PANEL);
+    print_stat(gather_name, UPD, m, n, gatherStart, gatherStop, PANEL);
+    print_stat(scatter_name, UPD, m, n ,scatterStart, scatterStop, PANEL);
   }
 
 }
