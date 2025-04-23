@@ -31,6 +31,7 @@
 #include "hpl_panel.hpp"
 #include "hpl_pfact.hpp"
 
+#include <chrono>
 /*
  * ---------------------------------------------------------------------
  * #typedefs and data structures
