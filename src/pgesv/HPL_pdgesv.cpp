@@ -265,32 +265,27 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
     }
 
     // wait here for the updates to compete
-#ifdef HPL_DETAILED_TIMING
-    HPL_ptimer(HPL_TIMING_UPDATE);
-#endif
     CHECK_HIP_ERROR(hipDeviceSynchronize());
-#ifdef HPL_DETAILED_TIMING
-    HPL_ptimer(HPL_TIMING_UPDATE);
-#endif
 
     stepEnd = MPI_Wtime();
 
-#ifdef HPL_PROGRESS_REPORT
-if(curr->nu0) {
-  print_update_stats(curr, HPL_LOOK_AHEAD);
-} 
-if(curr->nu2) {
-  print_update_stats(curr, HPL_UPD_2);
-}
+    // end of the loop, time to print statistics
+    if(curr->nu0) {
+      print_update_stats(curr, HPL_LOOK_AHEAD);
+    } 
+    if(curr->nu2) {
+      print_update_stats(curr, HPL_UPD_2);
+    }
 
-if(curr->nu1) {
-  print_update_stats(curr, HPL_UPD_1);
-}
-print_colls_stats(curr);
-#endif
+    if(curr->nu1) {
+      print_update_stats(curr, HPL_UPD_1);
+    }
+    print_colls_stats(curr);
+
 
     std::swap(curr, next);
   }
+  printf("end of loop");
 
   /*
    * Clean-up: Finish updates - release panels and panel list
@@ -313,7 +308,10 @@ print_colls_stats(curr);
   /*
    * Solve upper triangular system
    */
+  printf("TRSV");
   HPL_pdtrsv(GRID, A);
+  printf("END");
+  CHECK_HIP_ERROR(hipDeviceSynchronize());
   if(GRID->mycol==0 && GRID->myrow==0){
     free(Ptimes_start);
     free(Ptimes_end);
@@ -322,9 +320,6 @@ print_colls_stats(curr);
   }
 }
 
-/*void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, float time_start, float time_end, HPL_T_panel* PANEL){
-  print_stat(noyau_name, UPD, M, N, (double)time_start, (double)time_end, PANEL);
-}*/
 
 void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL){
   bool am_i_0 = PANEL->grid->mycol==0 && PANEL->grid->myrow==0;
@@ -499,9 +494,9 @@ void print_colls_stats(HPL_T_panel* PANEL){
   print_stat(pdfact_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, pdfact_start, pdfact_end, PANEL);
   print_stat(bcast_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, bcast_start, bcast_end, PANEL);
   print_stat(gatherv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, gather_start[HPL_LOOK_AHEAD], gather_end[HPL_LOOK_AHEAD], PANEL);
-  print_stat(gatherv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, gather_start[HPL_UPD_1], gather_end[HPL_UPD_1], PANEL);
-  print_stat(gatherv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, gather_start[HPL_UPD_2], gather_end[HPL_UPD_2], PANEL);
+  print_stat(gatherv_name, HPL_UPD_1, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, gather_start[HPL_UPD_1], gather_end[HPL_UPD_1], PANEL);
+  print_stat(gatherv_name, HPL_UPD_2, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, gather_start[HPL_UPD_2], gather_end[HPL_UPD_2], PANEL);
   print_stat(scatterv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, scatter_start[HPL_LOOK_AHEAD], scatter_end[HPL_LOOK_AHEAD], PANEL);
-  print_stat(scatterv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, scatter_start[HPL_UPD_1], scatter_end[HPL_UPD_1], PANEL);
-  print_stat(scatterv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, scatter_start[HPL_UPD_2], scatter_end[HPL_UPD_2], PANEL);
+  print_stat(scatterv_name, HPL_UPD_1, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, scatter_start[HPL_UPD_1], scatter_end[HPL_UPD_1], PANEL);
+  print_stat(scatterv_name, HPL_UPD_2, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, scatter_start[HPL_UPD_2], scatter_end[HPL_UPD_2], PANEL);
 }
