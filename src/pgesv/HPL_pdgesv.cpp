@@ -473,6 +473,13 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 void print_colls_stats(HPL_T_panel* PANEL){
   const int icurr = (PANEL->grid->myrow == PANEL->prow ? 1 : 0);
   int jb = PANEL->jb;
+
+  std::string pdfact_name = "pdfact" ;
+  std::string bcast_name = "bcast"  ;
+  std::string gatherv_name = "gatherv";
+  std::string scatterv_name = "scatterv";
+
+
   float pdfact_start = 0.;
   float pdfact_end = 0.;
   if (PANEL->grid->mycol==MModAdd1(PANEL->pcol, PANEL->grid->npcol)) {
@@ -489,12 +496,12 @@ void print_colls_stats(HPL_T_panel* PANEL){
     scatter_start[HPL_LOOK_AHEAD]=0.;
     scatter_end[HPL_LOOK_AHEAD]=0.;
   }
-  print_stat("pdfact", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, pdfact_start, pdfact_end, PANEL);
-  print_stat("bcast", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, bcast_start, bcast_end, PANEL);
-  print_stat("gatherv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, gather_start[HPL_LOOK_AHEAD], gather_end[HPL_LOOK_AHEAD], PANEL);
-  print_stat("gatherv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, gather_start[HPL_UPD_1], gather_end[HPL_UPD_1], PANEL);
-  print_stat("gatherv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, gather_start[HPL_UPD_2], gather_end[HPL_UPD_2], PANEL);
-  print_stat("scatterv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, scatter_start[HPL_LOOK_AHEAD], scatter_end[HPL_LOOK_AHEAD], PANEL);
-  print_stat("scatterv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, scatter_start[HPL_UPD_1], scatter_end[HPL_UPD_1], PANEL);
-  print_stat("scatterv", HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, scatter_start[HPL_UPD_2], scatter_end[HPL_UPD_2], PANEL);
+  print_stat(pdfact_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, pdfact_start, pdfact_end, PANEL);
+  print_stat(bcast_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, bcast_start, bcast_end, PANEL);
+  print_stat(gatherv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, gather_start[HPL_LOOK_AHEAD], gather_end[HPL_LOOK_AHEAD], PANEL);
+  print_stat(gatherv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, gather_start[HPL_UPD_1], gather_end[HPL_UPD_1], PANEL);
+  print_stat(gatherv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, gather_start[HPL_UPD_2], gather_end[HPL_UPD_2], PANEL);
+  print_stat(scatterv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu0, scatter_start[HPL_LOOK_AHEAD], scatter_end[HPL_LOOK_AHEAD], PANEL);
+  print_stat(scatterv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu1, scatter_start[HPL_UPD_1], scatter_end[HPL_UPD_1], PANEL);
+  print_stat(scatterv_name, HPL_LOOK_AHEAD, PANEL->mp - (icurr != 0 ? jb : 0), PANEL->nu2, scatter_start[HPL_UPD_2], scatter_end[HPL_UPD_2], PANEL);
 }
