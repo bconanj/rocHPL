@@ -479,7 +479,7 @@ void print_colls_stats(HPL_T_panel* PANEL){
       pfactStart));
     CHECK_HIP_ERROR(hipEventElapsedTime(&pdfact_end,
       beginning, 
-      pfactStop[UPD]));
+      pfactStop));
   }
   else{
     gather_start[HPL_LOOK_AHEAD]=0.;
