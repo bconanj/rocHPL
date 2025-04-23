@@ -471,6 +471,8 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 }
 
 void print_colls_stats(HPL_T_panel* PANEL){
+  const int icurr = (PANEL->grid->myrow == PANEL->prow ? 1 : 0);
+  int jb = PANEL->jb;
   float pdfact_start = 0.;
   float pdfact_end = 0.;
   if (PANEL->grid->mycol==MModAdd1(PANEL->pcol, PANEL->grid->npcol)) {
