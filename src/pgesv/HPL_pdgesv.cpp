@@ -67,7 +67,7 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   double start_time, time, step_time, gflops, step_gflops;
 #endif
 
-if(GRID->myrow == 0 && GRID->mycol == 0) {
+//if(GRID->myrow == 0 && GRID->mycol == 0) {
   printf("-------------------------------------------------------------------"
          "-------------------------------------------------------------------"
          "------------------------------\n");
@@ -77,7 +77,7 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
   Ptimes_end = (double*)malloc( sizeof(double)*nb_process);
   Prows =(int*)malloc(sizeof(int)*nb_process);
   Pcols = (int*)malloc(sizeof(int)*nb_process);
-}
+//}
 
   
   myrow        = GRID->myrow;
