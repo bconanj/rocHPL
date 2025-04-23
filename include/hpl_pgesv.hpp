@@ -30,8 +30,7 @@
 #include "hpl_pauxil.hpp"
 #include "hpl_panel.hpp"
 #include "hpl_pfact.hpp"
-
-#include <chrono>
+#include "hpl_ptimer.hpp"
 /*
  * ---------------------------------------------------------------------
  * #typedefs and data structures
