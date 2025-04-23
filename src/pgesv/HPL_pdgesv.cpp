@@ -322,9 +322,9 @@ print_colls_stats(curr);
   }
 }
 
-void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, float time_start, float time_end, HPL_T_panel* PANEL){
+/*void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, float time_start, float time_end, HPL_T_panel* PANEL){
   print_stat(noyau_name, UPD, M, N, (double)time_start, (double)time_end, PANEL);
-}
+}*/
 
 void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL){
   bool am_i_0 = PANEL->grid->mycol==0 && PANEL->grid->myrow==0;
