@@ -471,8 +471,8 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 }
 
 void print_colls_stats(HPL_T_panel* PANEL){
-  double pdfact_start = 0.;
-  double pdfact_end = 0.;
+  float pdfact_start = 0.;
+  float pdfact_end = 0.;
   if (PANEL->grid->mycol==MModAdd1(PANEL->pcol, PANEL->grid->npcol)) {
     CHECK_HIP_ERROR(hipEventElapsedTime(&pdfact_start,
       beginning,
