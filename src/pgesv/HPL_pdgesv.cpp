@@ -320,7 +320,7 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
 
 void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL){
   if(M>0 && N>0)  
-    print_line(noyau_name, UPD, M, N, times_start, times_end, PANEL->GRID->iam);
+    print_line(noyau_name, UPD, M, N, time_start, time_end, PANEL->GRID->iam);
 }
 
 void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, double time_start, double time_end, int process){
