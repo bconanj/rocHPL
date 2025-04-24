@@ -67,11 +67,6 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
          "-------------------------------------------------------------------"
          "------------------------------\n");
   printf("process, Operation, UPD, rows, cols, Start, End\n");
-  int nb_process = GRID->nprocs;
-  Ptimes_start = (double*)malloc( sizeof(double)*nb_process);
-  Ptimes_end = (double*)malloc( sizeof(double)*nb_process);
-  Prows =(int*)malloc(sizeof(int)*nb_process);
-  Pcols = (int*)malloc(sizeof(int)*nb_process);
 }
 
   
