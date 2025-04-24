@@ -67,7 +67,7 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   double start_time, time, step_time, gflops, step_gflops;
 #endif
 
-//if(GRID->myrow == 0 && GRID->mycol == 0) {
+if(GRID->myrow == 0 && GRID->mycol == 0) {
   printf("-------------------------------------------------------------------"
          "-------------------------------------------------------------------"
          "------------------------------\n");
@@ -77,7 +77,7 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   Ptimes_end = (double*)malloc( sizeof(double)*nb_process);
   Prows =(int*)malloc(sizeof(int)*nb_process);
   Pcols = (int*)malloc(sizeof(int)*nb_process);
-//}
+}
 
   
   myrow        = GRID->myrow;
@@ -270,7 +270,7 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
     stepEnd = MPI_Wtime();
 
     // end of the loop, time to print statistics
-    if(curr->nu0) {
+    /* if(curr->nu0) {
       print_update_stats(curr, HPL_LOOK_AHEAD);
     } 
     if(curr->nu2) {
@@ -281,7 +281,7 @@ void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
       print_update_stats(curr, HPL_UPD_1);
     }
     print_colls_stats(curr);
-
+ */
 
     std::swap(curr, next);
   }
