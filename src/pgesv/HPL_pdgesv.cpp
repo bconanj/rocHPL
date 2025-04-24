@@ -270,7 +270,7 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
     stepEnd = MPI_Wtime();
 
     // end of the loop, time to print statistics
-    /* if(curr->nu0) {
+    if(curr->nu0) {
       print_update_stats(curr, HPL_LOOK_AHEAD);
     } 
     if(curr->nu2) {
@@ -281,11 +281,10 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
       print_update_stats(curr, HPL_UPD_1);
     }
     print_colls_stats(curr);
- */
+
 
     std::swap(curr, next);
   }
-  printf("end of loop");
 
   /*
    * Clean-up: Finish updates - release panels and panel list
@@ -308,9 +307,7 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
   /*
    * Solve upper triangular system
    */
-  printf("TRSV");
   HPL_pdtrsv(GRID, A);
-  printf("END");
   CHECK_HIP_ERROR(hipDeviceSynchronize());
   if(GRID->mycol==0 && GRID->myrow==0){
     free(Ptimes_start);
@@ -322,22 +319,8 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
 
 
 void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL){
-  bool am_i_0 = PANEL->grid->mycol==0 && PANEL->grid->myrow==0;
-  int nb_process = PANEL->grid->nprocs;
-  if(nb_process < 1){
-    printf("%i processus", nb_process);
-  }
-  MPI_Gather(&time_start, 1, MPI_DOUBLE, Ptimes_start, nb_process, MPI_DOUBLE, 0, PANEL->grid->all_comm);
-  MPI_Gather(&time_end, 1, MPI_DOUBLE, Ptimes_end, nb_process, MPI_DOUBLE, 0, PANEL->grid->all_comm);
-  MPI_Gather(&M, 1, MPI_INT, Prows, nb_process, MPI_INT, 0, PANEL->grid->all_comm);
-  MPI_Gather(&N, 1, MPI_INT, Pcols, nb_process, MPI_INT, 0, PANEL->grid->all_comm);
-  if(am_i_0){
-    for(int i = 0; i<nb_process;++i){
-      /*if(Prows[i]>0 && Pcols[i]>0)*/
-        print_line(noyau_name, UPD, Prows[i], Pcols[i], Ptimes_start[i], Ptimes_end[i], i);
-      
-    }
-  }
+  if(M>0 && N>0)  
+    print_line(noyau_name, UPD, M, N, times_start, times_end, PANEL->GRID->iam);
 }
 
 void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, double time_start, double time_end, int process){
