@@ -24,11 +24,6 @@ void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols
 
 void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL);
 
-double *Ptimes_start;
-double *Ptimes_end;
-int *Prows;
-int *Pcols;
-
 void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   /*
    * Purpose
@@ -309,12 +304,6 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
    */
   HPL_pdtrsv(GRID, A);
   CHECK_HIP_ERROR(hipDeviceSynchronize());
-  if(GRID->mycol==0 && GRID->myrow==0){
-    free(Ptimes_start);
-    free(Ptimes_end);
-    free(Prows);
-    free(Pcols);
-  }
 }
 
 
