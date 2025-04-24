@@ -294,10 +294,14 @@ void HPL_pdlaswp_exchange(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
 #endif
 
     // receive rows from icurrow into W
+    scatter_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_scatterv(W, ipcounts, ipoffsets, ipcounts[myrow], icurrow, comm);
+    scatter_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
     // All gather U
+    gather_start[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
     HPL_allgatherv(U, ipcounts[myrow], ipcounts, ipoffsets, comm);
+    gather_end[UPD] = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now()-beginning_t).count()/1000.;
 
 #ifdef HPL_DETAILED_TIMING
     HPL_ptimer(HPL_TIMING_LASWP);
@@ -399,6 +403,7 @@ void HPL_pdlaswp_end(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
   if(nprow == 1) {
     CHECK_HIP_ERROR(hipEventRecord(rowScatterStart[UPD], stream));
     HPL_dlaswp00N(jb, n, A, lda, permU);
+    CHECK_HIP_ERROR(hipEventRecord(rowScatterStop[UPD], stream));
     return;
   }
 
