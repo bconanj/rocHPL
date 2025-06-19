@@ -386,7 +386,7 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD, int k) {
     print_stat(gemm_name, UPD, m, n, k, gemmStart, gemmStop, PANEL);
     print_stat(trsm_name, UPD, m, n, k, trsmStart, trsmStop, PANEL);
     print_stat(gather_name, UPD, m, n, k, gatherStart, gatherStop, PANEL);
-    print_stat(scatter_name, UPD, m, n k,scatterStart, scatterStop, PANEL);
+    print_stat(scatter_name, UPD, m, n, k,scatterStart, scatterStop, PANEL);
     
   } else {
 
@@ -429,7 +429,7 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD, int k) {
     print_stat(gemm_name, UPD, m, n, k, gemmStart, gemmStop, PANEL);
     print_stat(trsm_name, UPD, m, n, k, trsmStart, trsmStop, PANEL);
     print_stat(gather_name, UPD, m, n, k, gatherStart, gatherStop, PANEL);
-    print_stat(scatter_name, UPD, m, n k,scatterStart, scatterStop, PANEL);
+    print_stat(scatter_name, UPD, m, n, k,scatterStart, scatterStop, PANEL);
   }
 }
 
