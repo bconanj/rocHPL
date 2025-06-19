@@ -353,7 +353,7 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD, int k) {
     float gatherStop=0.;
     float scatterStop=0.;
 
-    if (PANEL->grid->mycol==k%PANEL->npcol) {
+    if (PANEL->grid->mycol==k%PANEL->grid->npcol) {
       CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStart,
         beginning,
         dtrsmStart[UPD]));
@@ -445,7 +445,7 @@ void print_colls_stats(HPL_T_panel* PANEL, int k){
 
   float pdfact_start = 0.;
   float pdfact_end = 0.;
-  if (PANEL->grid->mycol==k%PANEL->npcol) {
+  if (PANEL->grid->mycol==k%PANEL->grid->npcol) {
     CHECK_HIP_ERROR(hipEventElapsedTime(&pdfact_start,
       beginning,
       pfactStart));
