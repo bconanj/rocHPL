@@ -16,13 +16,13 @@
 
 #include "hpl.hpp"
 
-void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD);
+void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD, int k);
 
-void print_colls_stats(HPL_T_panel* PANEL);
+void print_colls_stats(HPL_T_panel* PANEL, int k);
 
-void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, double time_start, double time_end, int process);
+void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, int k, double time_start, double time_end, int process);
 
-void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL);
+void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, int k, double time_start, double time_end, HPL_T_panel* PANEL);
 
 void HPL_pdgesv(HPL_T_grid* GRID, HPL_T_palg* ALGO, HPL_T_pmat* A) {
   /*
@@ -66,7 +66,7 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
   printf("-------------------------------------------------------------------"
          "-------------------------------------------------------------------"
          "------------------------------\n");
-  printf("process, Operation, UPD, rows, cols, Start, End\n");
+  printf("process, Operation, UPD, rows, cols, k, Start, End\n");
 }
 
   
@@ -178,6 +178,7 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
   }
 
   double stepStart, stepEnd;
+  int iteration=1;
   /*
    * Main loop over the remaining columns of A
    */
@@ -261,17 +262,17 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
 
     // end of the loop, time to print statistics
     if(curr->nu0) {
-      print_update_stats(curr, HPL_LOOK_AHEAD);
+      print_update_stats(curr, HPL_LOOK_AHEAD, iteration);
     } 
     if(curr->nu2) {
-      print_update_stats(curr, HPL_UPD_2);
+      print_update_stats(curr, HPL_UPD_2, iteration);
     }
 
     if(curr->nu1) {
-      print_update_stats(curr, HPL_UPD_1);
+      print_update_stats(curr, HPL_UPD_1, iteration);
     }
-    print_colls_stats(curr);
-
+    print_colls_stats(curr, iteration);
+    iteration++;
 
     std::swap(curr, next);
   }
@@ -302,12 +303,12 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
 }
 
 
-void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, double time_start, double time_end, HPL_T_panel* PANEL){
+void print_stat(std::string &noyau_name, const HPL_T_UPD UPD, int M, int N, int k, double time_start, double time_end, HPL_T_panel* PANEL){
   if(M>0 && N>0)  
-    print_line(noyau_name, UPD, M, N, time_start, time_end, PANEL->grid->iam);
+    print_line(noyau_name, UPD, M, N, k, time_start, time_end, PANEL->grid->iam);
 }
 
-void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, double time_start, double time_end, int process){
+void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols, int k, double time_start, double time_end, int process){
   std::string upd_name;
   if(UPD == HPL_LOOK_AHEAD) {
     upd_name = "Look Ahead";
@@ -316,11 +317,11 @@ void print_line(std::string &noyau_name, const HPL_T_UPD UPD, int rows, int cols
   } else if(UPD == HPL_UPD_2) {
     upd_name = "2";
   }
-  printf("%i, %s, %s, %i, %i, %f, %f\n", process ,noyau_name.c_str(), upd_name.c_str(), rows, cols, time_start, time_end);
+  printf("%i, %s, %s, %i, %i, %i, %f, %f\n", process ,noyau_name.c_str(), upd_name.c_str(), rows, cols, k, time_start, time_end);
 }
 
 
-void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
+void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD, int k) {
 
   int jb = PANEL->jb;
   std::string gemm_name = "GEMM";
@@ -352,7 +353,7 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
     float gatherStop=0.;
     float scatterStop=0.;
 
-    if (PANEL->grid->mycol==MModAdd1(PANEL->pcol, PANEL->grid->npcol)) {
+    if (PANEL->grid->mycol==k%PANEL->npcol) {
       CHECK_HIP_ERROR(hipEventElapsedTime(&trsmStart,
         beginning,
         dtrsmStart[UPD]));
@@ -382,9 +383,9 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
       n=0;
     }
 
-    print_stat(gemm_name, UPD, m, n, gemmStart, gemmStop, PANEL);
-    print_stat(trsm_name, UPD, m, n, trsmStart, trsmStop, PANEL);
-    print_stat(gather_name, UPD, m, n, gatherStart, gatherStop, PANEL);
+    print_stat(gemm_name, UPD, m, n, k, gemmStart, gemmStop, PANEL);
+    print_stat(trsm_name, UPD, m, n, k, trsmStart, trsmStop, PANEL);
+    print_stat(gather_name, UPD, m, n, k, gatherStart, gatherStop, PANEL);
     print_stat(scatter_name, UPD, m, n ,scatterStart, scatterStop, PANEL);
     
   } else {
@@ -425,14 +426,14 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
         dgemmStop[UPD]));
     }
 
-    print_stat(gemm_name, UPD, m, n, gemmStart, gemmStop, PANEL);
-    print_stat(trsm_name, UPD, m, n, trsmStart, trsmStop, PANEL);
-    print_stat(gather_name, UPD, m, n, gatherStart, gatherStop, PANEL);
+    print_stat(gemm_name, UPD, m, n, k, gemmStart, gemmStop, PANEL);
+    print_stat(trsm_name, UPD, m, n, k, trsmStart, trsmStop, PANEL);
+    print_stat(gather_name, UPD, m, n, k, gatherStart, gatherStop, PANEL);
     print_stat(scatter_name, UPD, m, n ,scatterStart, scatterStop, PANEL);
   }
 }
 
-void print_colls_stats(HPL_T_panel* PANEL){
+void print_colls_stats(HPL_T_panel* PANEL, int k){
   const int icurr = (PANEL->grid->myrow == PANEL->prow ? 1 : 0);
   int jb = PANEL->jb;
 
@@ -444,7 +445,7 @@ void print_colls_stats(HPL_T_panel* PANEL){
 
   float pdfact_start = 0.;
   float pdfact_end = 0.;
-  if (PANEL->grid->mycol==MModAdd1(PANEL->pcol, PANEL->grid->npcol)) {
+  if (PANEL->grid->mycol==k%PANEL->npcol) {
     CHECK_HIP_ERROR(hipEventElapsedTime(&pdfact_start,
       beginning,
       pfactStart));
