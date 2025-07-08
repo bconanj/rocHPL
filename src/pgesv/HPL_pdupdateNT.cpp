@@ -15,6 +15,7 @@
  */
 
 #include "hpl.hpp"
+#include <unistd.h>
 
 void HPL_pdupdateNT(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
   /*
@@ -132,7 +133,7 @@ void HPL_pdupdateNT(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
    */
   if(curr != 0) {
     CHECK_HIP_ERROR(hipDeviceSynchronize());
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    usleep(20000);
     CHECK_HIP_ERROR(hipEventRecord(dgemmStart[UPD], stream));
     CHECK_ROCBLAS_ERROR(rocblas_dgemm(handle,
                                       rocblas_operation_none,
@@ -153,7 +154,7 @@ void HPL_pdupdateNT(HPL_T_panel* PANEL, const HPL_T_UPD UPD) {
     if(PANEL->grid->nprow > 1) HPL_dlatcpy(jb, n, Uptr, LDU, Aptr, lda);
   } else {
     CHECK_HIP_ERROR(hipDeviceSynchronize());
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    usleep(20000);
     CHECK_HIP_ERROR(hipEventRecord(dgemmStart[UPD], stream));
     CHECK_ROCBLAS_ERROR(rocblas_dgemm(handle,
                                       rocblas_operation_none,
