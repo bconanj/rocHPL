@@ -365,13 +365,13 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD, int k) {
         rowGatherStart[UPD]));
       CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStop,
         beginning,
-        rowGatherStop[UPD]));
+        rowGatherStop[UPD]));}
       CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStart,
         beginning,
         rowScatterStart[UPD]));
       CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStop,
         beginning,
-        rowScatterStop[UPD]));}
+        rowScatterStop[UPD]));
       CHECK_HIP_ERROR(hipEventElapsedTime(&gemmStart,
         beginning,
         dgemmStart[UPD]));
@@ -411,13 +411,13 @@ void print_update_stats(HPL_T_panel* PANEL, const HPL_T_UPD UPD, int k) {
         rowGatherStart[UPD]));
       CHECK_HIP_ERROR(hipEventElapsedTime(&gatherStop,
         beginning,
-        rowGatherStop[UPD]));
+        rowGatherStop[UPD]));}
       CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStart,
         beginning,
         rowScatterStart[UPD]));
       CHECK_HIP_ERROR(hipEventElapsedTime(&scatterStop,
         beginning,
-        rowScatterStop[UPD]));}
+        rowScatterStop[UPD]));
       CHECK_HIP_ERROR(hipEventElapsedTime(&gemmStart,
         beginning,
         dgemmStart[UPD]));
