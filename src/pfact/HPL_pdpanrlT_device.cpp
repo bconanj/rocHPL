@@ -406,7 +406,7 @@ void HPL_pdpanrlT(HPL_T_panel* PANEL,
     ii = 0;
   }
 
-  hipStream_t stream;
+  /*hipStream_t stream;
   CHECK_ROCBLAS_ERROR(rocblas_get_stream(handle, &stream));
 
   constexpr int BLOCKSIZE = 1024;
@@ -447,19 +447,19 @@ void HPL_pdpanrlT(HPL_T_panel* PANEL,
                                                0,
                                                stream));
   }
-
+*/
   int     cnt0  = 4 + 2 * PANEL->jb;
   double* WORK  = mat->host_workspace;
   double* Wwork = WORK + cnt0;
 
   for(int j = 0; j < N; j++) {
     /*Wait for host_flag to update from GPU*/
-    if(M > 0) host_flag.wait(0, memory_order_acquire);
+    //if(M > 0) host_flag.wait(0, memory_order_acquire);
 
     HPL_pdmxswp(PANEL, M, ii, jj + j, WORK);
 
     /*Signal GPU*/
-    if(M > 0) host_flag.store(0, memory_order_release);
+    //if(M > 0) host_flag.store(0, memory_order_release);
   }
 
 #ifdef HPL_DETAILED_TIMING
