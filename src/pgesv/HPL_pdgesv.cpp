@@ -155,26 +155,26 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
     HPL_pdpanel_Wait(curr);
   }
 
-  HPL_pdpanel_bcast(curr);
+  //HPL_pdpanel_bcast(curr);
 
   // start Ubcast+row swapping for second part of A
-  HPL_pdlaswp_start(curr, HPL_UPD_2);
+  //HPL_pdlaswp_start(curr, HPL_UPD_2);
 
   if(mycol == icurcol) {
     // start Ubcast+row swapping for look ahead
-    HPL_pdlaswp_start(curr, HPL_LOOK_AHEAD);
+    //HPL_pdlaswp_start(curr, HPL_LOOK_AHEAD);
   }
 
   // start Ubcast+row swapping for first part of A
-  HPL_pdlaswp_start(curr, HPL_UPD_1);
+  //HPL_pdlaswp_start(curr, HPL_UPD_1);
 
   // Ubcast+row swaps for second part of A
-  HPL_pdlaswp_exchange(curr, HPL_UPD_2);
+  //HPL_pdlaswp_exchange(curr, HPL_UPD_2);
 
   if(mycol == icurcol) {
     // Ubcast+row swaps for look ahead
     // nn = HPL_numrocI(jb, j, nb, nb, mycol, 0, npcol);
-    HPL_pdlaswp_exchange(curr, HPL_LOOK_AHEAD);
+    //HPL_pdlaswp_exchange(curr, HPL_LOOK_AHEAD);
   }
 
   double stepStart, stepEnd;
@@ -196,39 +196,39 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
 
     if(mycol == icurcol) {
       /* update look ahead */
-      HPL_pdlaswp_end(curr, HPL_LOOK_AHEAD);
-      HPL_pdupdate(curr, HPL_LOOK_AHEAD);
+      //HPL_pdlaswp_end(curr, HPL_LOOK_AHEAD);
+      //HPL_pdupdate(curr, HPL_LOOK_AHEAD);
 
       /*Panel factorization FLOP count is (2/3)NB^3 - (1/2)NB^2 - (1/6)NB +
        * (N-i*NB)(NB^2-NB)*/
       HPL_pdfact(next); /* factor current panel */
 
       /* Queue up finishing the second section */
-      HPL_pdlaswp_end(curr, HPL_UPD_2);
-      HPL_pdupdate(curr, HPL_UPD_2);
+      //HPL_pdlaswp_end(curr, HPL_UPD_2);
+      //HPL_pdupdate(curr, HPL_UPD_2);
 
       // compute swapping info
       HPL_pdpanel_swapids(next);
       HPL_pdpanel_Wait(next);
     } else {
       /* Queue up finishing the second section */
-      HPL_pdlaswp_end(curr, HPL_UPD_2);
-      HPL_pdupdate(curr, HPL_UPD_2);
+      //HPL_pdlaswp_end(curr, HPL_UPD_2);
+      //HPL_pdupdate(curr, HPL_UPD_2);
     }
 
     /* broadcast current panel */
-    HPL_pdpanel_bcast(next);
+    //HPL_pdpanel_bcast(next);
 
     // start Ubcast+row swapping for second part of A
-    HPL_pdlaswp_start(next, HPL_UPD_2);
+    //HPL_pdlaswp_start(next, HPL_UPD_2);
 
     // while the second section is updating, exchange the rows from the first
     // section
-    HPL_pdlaswp_exchange(curr, HPL_UPD_1);
+    //HPL_pdlaswp_exchange(curr, HPL_UPD_1);
 
     /* Queue up finishing the first section */
-    HPL_pdlaswp_end(curr, HPL_UPD_1);
-    HPL_pdupdate(curr, HPL_UPD_1);
+    //HPL_pdlaswp_end(curr, HPL_UPD_1);
+    //HPL_pdupdate(curr, HPL_UPD_1);
 
     if(mycol == icurcol) {
       jj += jb;
@@ -240,19 +240,19 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
     if(mycol == icurcol) {
       // prep the row swaps for the next look ahead
       //  nn = HPL_numrocI(jb, j+nb, nb, nb, mycol, 0, npcol);
-      HPL_pdlaswp_start(next, HPL_LOOK_AHEAD);
+      //HPL_pdlaswp_start(next, HPL_LOOK_AHEAD);
 
       // start Ubcast+row swapping for first part of A
-      HPL_pdlaswp_start(next, HPL_UPD_1);
+      //HPL_pdlaswp_start(next, HPL_UPD_1);
 
-      HPL_pdlaswp_exchange(next, HPL_UPD_2);
+      //HPL_pdlaswp_exchange(next, HPL_UPD_2);
 
-      HPL_pdlaswp_exchange(next, HPL_LOOK_AHEAD);
+      //HPL_pdlaswp_exchange(next, HPL_LOOK_AHEAD);
     } else {
       // start Ubcast+row swapping for first part of A
-      HPL_pdlaswp_start(next, HPL_UPD_1);
+      //HPL_pdlaswp_start(next, HPL_UPD_1);
 
-      HPL_pdlaswp_exchange(next, HPL_UPD_2);
+      //HPL_pdlaswp_exchange(next, HPL_UPD_2);
     }
 
     // wait here for the updates to compete
@@ -281,11 +281,11 @@ if(GRID->myrow == 0 && GRID->mycol == 0) {
    * Clean-up: Finish updates - release panels and panel list
    */
   // nn = HPL_numrocI(1, N, nb, nb, mycol, 0, npcol);
-  HPL_pdlaswp_end(curr, HPL_LOOK_AHEAD);
-  HPL_pdupdate(curr, HPL_LOOK_AHEAD);
+  //HPL_pdlaswp_end(curr, HPL_LOOK_AHEAD);
+  //HPL_pdupdate(curr, HPL_LOOK_AHEAD);
 
-  HPL_pdlaswp_end(curr, HPL_UPD_2);
-  HPL_pdupdate(curr, HPL_UPD_2);
+  //HPL_pdlaswp_end(curr, HPL_UPD_2);
+  //HPL_pdupdate(curr, HPL_UPD_2);
 
 #ifdef HPL_DETAILED_TIMING
   HPL_ptimer(HPL_TIMING_UPDATE);
