@@ -26,7 +26,7 @@ void HPL_dcopy(const int     N,
                const int     INCX,
                double*       Y,
                const int     INCY) {
-  /* if(INCX == 1 && INCY == 1) {
+  if(INCX == 1 && INCY == 1) {
     for(int n = 0; n < N; ++n) Y[n] = X[n];
   } else {
     for(int n = 0; n < N; ++n) {
@@ -34,7 +34,7 @@ void HPL_dcopy(const int     N,
       Y += INCY;
       X += INCX;
     }
-  } */
+  }
 }
 
 /* Swap-broadcast comparison function usable in MPI_Allreduce */
